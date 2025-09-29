@@ -11,7 +11,8 @@ import SwiftUI
 struct iOS_FEApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+//            ContentView()
+            PartsView()
         }
     }
 }
