@@ -24,7 +24,7 @@ struct BottomBar: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-
+            
             // 커스텀 바텀바
             HStack {
                 bottomBarItem(index: 0, title: "홈", icon: "house.fill")
@@ -34,18 +34,20 @@ struct BottomBar: View {
                 bottomBarItem(index: 4, title: "내 정보", icon: "person.crop.circle")
             }
             .padding(.horizontal, 8)
-            .padding(.vertical)
-            .padding(.bottom, 24)
-            .background(
-                RoundedRectangle(cornerRadius: 0)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                    .background(Color.white)
+            .padding(.vertical, 10)
+            .frame(height: 100)
+            .background(AppColor.mainWhite)
+            .overlay(
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundColor(AppColor.mainGray.opacity(0.6)),
+                alignment: .top
             )
         }
         .edgesIgnoringSafeArea(.bottom)
     }
     
-    // 커스텀 바텀바 아이템 뷰
+    // 바텀바 아이템
     private func bottomBarItem(index: Int, title: String, icon: String) -> some View {
         Button(action: {
             selectedIndex = index
@@ -53,12 +55,13 @@ struct BottomBar: View {
             VStack(spacing: 2) {
                 Image(systemName: icon)
                     .font(.system(size: 24, weight: .semibold))
-                    .foregroundColor(selectedIndex == index ? .blue : .gray)
+                    .foregroundColor(selectedIndex == index ? AppColor.mainBlue : .gray)
                 Text(title)
                     .font(.caption2)
-                    .foregroundColor(selectedIndex == index ? .blue : .gray)
+                    .foregroundColor(selectedIndex == index ? AppColor.mainBlue : .gray)
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.bottom, 20)
             .contentShape(Rectangle())
         }
     }
