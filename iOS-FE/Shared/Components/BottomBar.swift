@@ -1,26 +1,20 @@
-//
-//  BottomBar.swift
-//  iOS-FE
-//
-//  Created by wj on 10/3/25.
-//
-
 import SwiftUI
 
 struct BottomBar: View {
     @State private var selectedIndex: Int = 0
-    
+    @StateObject private var historyViewModel = OrderHistoryViewModel()
+
     var body: some View {
         VStack(spacing: 0) {
             // 메인 컨텐츠
             ZStack {
                 switch selectedIndex {
-                case 0: PartsView()
-                case 1: PartsView()
-                case 2: PartsView()
-                case 3: PartsView()
+                case 0: MyPageView()
+                case 1: OrderRequestView(historyViewModel: historyViewModel)
+                case 2: OrderHistoryView(historyViewModel: historyViewModel)
+                case 3: MyPageView()
                 case 4: MyPageView()
-                default: PartsView()
+                default: MyPageView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

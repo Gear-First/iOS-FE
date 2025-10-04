@@ -1,10 +1,3 @@
-//
-//  iOS_FEApp.swift
-//  iOS-FE
-//
-//  Created by wj on 9/29/25.
-//
-
 import SwiftUI
 
 @main
