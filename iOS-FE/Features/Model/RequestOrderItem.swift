@@ -11,7 +11,7 @@ struct OrderItem: Identifiable, Codable {
     let inventoryName: String
     let quantity: Int
     let requestDate: String
-    let status: String?
+    var status: String?
 
     init(
         inventoryCode: String,
