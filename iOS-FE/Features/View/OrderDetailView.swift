@@ -77,7 +77,7 @@ struct OrderDetailView: View {
             .padding()
         }
         .padding(.top, 12)
-        .navigationTitle("요청 상세")
+        .navigationTitle("발주 상세")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {
