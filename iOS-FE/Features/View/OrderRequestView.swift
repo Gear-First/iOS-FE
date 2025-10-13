@@ -15,22 +15,12 @@ struct OrderRequestView: View {
                     VStack(spacing: 24) {
                         // MARK: - 차량 선택
                         SectionCard(title: "차량 선택") {
-                            Button(action: {
-                                showCarSearch.toggle()
-                            }) {
-                                HStack {
-                                    Text("차량번호를 선택하세요")
-                                        .foregroundColor(AppColor.mainTextGray)
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(AppColor.mainTextGray)
+                            EditableField(
+                                value: .constant(""),
+                                placeholder: "차량번호를 선택하세요",
+                                isEditable: false) {
+                                    showCarSearch.toggle()
                                 }
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(AppColor.mainWhite)
-                                .cornerRadius(10)
-                                .shadow(color: AppColor.mainBlack.opacity(0.05), radius: 3, x: 0, y: 1)
-                            }
                             
                             if !viewModel.selectedCarType.isEmpty {
                                 HStack {
@@ -55,22 +45,12 @@ struct OrderRequestView: View {
                         // MARK: - 부품 선택
                         if !viewModel.selectedCarNumber.isEmpty {
                             SectionCard(title: "부품 선택") {
-                                Button(action: {
-                                    showPartSearch.toggle()
-                                }) {
-                                    HStack {
-                                        Text("부품을 선택하세요")
-                                            .foregroundColor(AppColor.mainTextGray)
-                                        Spacer()
-                                        Image(systemName: "chevron.right")
-                                            .foregroundColor(AppColor.mainTextGray)
+                                EditableField(
+                                    value: .constant(""),
+                                    placeholder: "부품을 선택하세요",
+                                    isEditable: false) {
+                                        showPartSearch.toggle()
                                     }
-                                    .padding()
-                                    .frame(maxWidth: .infinity)
-                                    .background(AppColor.mainWhite)
-                                    .cornerRadius(10)
-                                    .shadow(color: AppColor.mainBlack.opacity(0.05), radius: 3, x: 0, y: 1)
-                                }
                                 
                                 if !viewModel.orderCode.isEmpty {
                                     HStack {
@@ -97,12 +77,10 @@ struct OrderRequestView: View {
                         if !viewModel.orderName.isEmpty {
                             SectionCard(title: "수량 입력") {
                                 HStack {
-                                    TextField("수량 입력", value: $viewModel.orderQuantity, formatter: NumberFormatter())
-                                        .keyboardType(.numberPad)
-                                        .padding()
-                                        .background(AppColor.mainWhite)
-                                        .cornerRadius(10)
-                                        .shadow(color: AppColor.mainBlack.opacity(0.05), radius: 3, x: 0, y: 1)
+                                    EditableField(
+                                        value: $viewModel.orderQuantity,
+                                        placeholder: "수량",
+                                        isEditable: true)
                                     
                                     VStack(spacing: 0) {
                                         Button(action: { viewModel.orderQuantity += 1 }) {
