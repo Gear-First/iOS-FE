@@ -10,9 +10,9 @@ struct BottomBar: View {
             ZStack {
                 switch selectedIndex {
                 case 0: MyPageView()
-                case 1: OrderRequestView(historyViewModel: historyViewModel)
-                case 2: OrderHistoryView(historyViewModel: historyViewModel)
-                case 3: MyPageView()
+                case 1: MyPageView()
+                case 2: OrderRequestView(historyViewModel: historyViewModel)
+                case 3: OrderHistoryView(historyViewModel: historyViewModel)
                 case 4: MyPageView()
                 default: MyPageView()
                 }
@@ -21,10 +21,10 @@ struct BottomBar: View {
             
             // 커스텀 바텀바
             HStack {
-                bottomBarItem(index: 0, title: "홈", icon: "house.fill")
-                bottomBarItem(index: 1, title: "요청", icon: "square.and.pencil")
-                bottomBarItem(index: 2, title: "내역", icon: "document")
-                bottomBarItem(index: 3, title: "알림", icon: "bell")
+                bottomBarItem(index: 0, title: "접수 목록", icon: "square.and.pencil")
+                bottomBarItem(index: 1, title: "접수 내역", icon: "document")
+                bottomBarItem(index: 2, title: "발주 요청", icon: "square.and.pencil")
+                bottomBarItem(index: 3, title: "발주 내역", icon: "document")
                 bottomBarItem(index: 4, title: "내 정보", icon: "person.crop.circle")
             }
             .padding(.horizontal, 8)
