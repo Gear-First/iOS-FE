@@ -34,7 +34,7 @@ struct BottomBar: View {
             .overlay(
                 Rectangle()
                     .frame(height: 1)
-                    .foregroundColor(AppColor.mainGray.opacity(0.6)),
+                    .foregroundColor(AppColor.mainBorderGray.opacity(0.6)),
                 alignment: .top
             )
         }
