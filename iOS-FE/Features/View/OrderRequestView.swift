@@ -129,5 +129,6 @@ struct OrderRequestView: View {
 }
 
 #Preview {
-    OrderRequestView(historyViewModel: OrderHistoryViewModel())
+    let historyVM = OrderHistoryViewModel()
+    OrderRequestView(historyViewModel: historyVM)
 }
