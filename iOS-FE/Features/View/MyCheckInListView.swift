@@ -89,7 +89,7 @@ struct MyCheckInListView: View {
             }
             .navigationTitle("내 접수 내역")
             .navigationBarTitleDisplayMode(.inline)
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(Color(AppColor.bgGray))
         }
     }
 }
