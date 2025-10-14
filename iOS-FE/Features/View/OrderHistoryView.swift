@@ -18,7 +18,7 @@ struct OrderHistoryView: View {
                         // 요청 내역이 없을 때
                         VStack {
                             Spacer()
-                            Text("요청 내역이 없습니다.")
+                            Text("발주 내역이 없습니다.")
                                 .foregroundColor(.gray)
                                 .font(.body)
                                 .padding()
@@ -74,7 +74,7 @@ struct OrderHistoryView: View {
                 }
             }
             .padding(.top, 12)
-            .navigationTitle("요청 내역")
+            .navigationTitle("발주 내역")
             .navigationBarTitleDisplayMode(.inline)
         }
     }

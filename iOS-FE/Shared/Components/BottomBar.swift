@@ -3,14 +3,15 @@ import SwiftUI
 struct BottomBar: View {
     @State private var selectedIndex: Int = 0
     @StateObject private var historyViewModel = OrderHistoryViewModel()
+    @StateObject private var checkInListViewModel = CheckInListViewModel()
 
     var body: some View {
         VStack(spacing: 0) {
             // 메인 컨텐츠
             ZStack {
                 switch selectedIndex {
-                case 0: MyPageView()
-                case 1: MyPageView()
+                case 0: CheckInListView(checkInListViewModel: checkInListViewModel)
+                case 1: MyCheckInListView(checkInListViewModel: checkInListViewModel)
                 case 2: OrderRequestView(historyViewModel: historyViewModel)
                 case 3: OrderHistoryView(historyViewModel: historyViewModel)
                 case 4: MyPageView()
@@ -34,7 +35,7 @@ struct BottomBar: View {
             .overlay(
                 Rectangle()
                     .frame(height: 1)
-                    .foregroundColor(AppColor.mainGray.opacity(0.6)),
+                    .foregroundColor(AppColor.mainBorderGray.opacity(0.6)),
                 alignment: .top
             )
         }
