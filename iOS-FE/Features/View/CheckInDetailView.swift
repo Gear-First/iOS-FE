@@ -12,7 +12,8 @@ struct CheckInDetailView: View {
     
     var body: some View {
         ZStack {
-            Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+            Color(AppColor.bgGray)
+                .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 ScrollView {
@@ -39,13 +40,14 @@ struct CheckInDetailView: View {
                             DetailInfoSection(
                                 title: "수리 완료 정보",
                                 rows: [
-                                    ("완료일자", checkInDetailViewModel.item.completionDate ?? "-"),
                                     ("수리내용", checkInDetailViewModel.item.repairDescription ?? "-"),
                                     ("원인", checkInDetailViewModel.item.cause ?? "-"),
+                                    
+                                    ("완료일자", checkInDetailViewModel.item.completionDate ?? "-"),
+                                    ("소요일", "\(checkInDetailViewModel.item.leadTimeDays ?? 0)일"),
                                     ("부품명", checkInDetailViewModel.item.partName ?? "-"),
                                     ("수량", "\(checkInDetailViewModel.item.partQuantity ?? 0)"),
-                                    ("총가격", "\(checkInDetailViewModel.item.totalPrice ?? 0)원"),
-                                    ("소요일", "\(checkInDetailViewModel.item.leadTimeDays ?? 0)일")
+                                    ("총가격", "\(checkInDetailViewModel.item.totalPrice ?? 0)원")
                                 ]
                             )
                         }

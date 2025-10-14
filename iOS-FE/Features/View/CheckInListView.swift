@@ -7,7 +7,7 @@ struct CheckInListView: View {
         NavigationView {
             ZStack {
                 // 전체 배경
-                Color(UIColor.systemGroupedBackground)
+                Color(AppColor.bgGray)
                     .ignoresSafeArea()
 
                 if checkInListViewModel.items.isEmpty {
