@@ -124,6 +124,7 @@ struct OrderRequestView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 24)
+            .background(AppColor.bgGray)
         }
     }
 }
