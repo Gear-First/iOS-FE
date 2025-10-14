@@ -111,23 +111,16 @@ struct OrderRequestView: View {
                     PartSearchSheetView(viewModel: viewModel)
                 }
                 // MARK: - 요청 버튼
-                Button(action: {
+                BaseButton(
+                    label: "요청하기",
+                    backgroundColor: viewModel.isValid() ? AppColor.mainBlue : AppColor.mainTextGray.opacity(0.4)
+                ) {
                     let newItem = viewModel.submitRequestOrder()
                     historyViewModel.addNewItem(newItem)
                     viewModel.resetForm()
                     dismiss()
-                }) {
-                    Text("요청하기")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .font(.headline)
-                        .background(viewModel.isValid() ? AppColor.mainBlue : AppColor.mainTextGray.opacity(0.4))
-                        .foregroundColor(AppColor.mainWhite)
-                        .cornerRadius(10)
-                        .shadow(color: AppColor.mainBlack.opacity(0.1), radius: 4, x: 0, y: 2)
                 }
                 .disabled(!viewModel.isValid())
-                
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 24)
