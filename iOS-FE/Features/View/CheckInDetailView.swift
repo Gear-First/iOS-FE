@@ -4,95 +4,74 @@ struct CheckInDetailView: View {
     @ObservedObject var checkInDetailViewModel: CheckInDetailViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showAlert = false
-    @State private var alertType: AlertType? = nil  // 어떤 Alert인지 구분용
+    @State private var alertType: AlertType? = nil
     
     enum AlertType {
         case startRepair
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // 상태 배지
-                VStack(spacing: 10) {
-                    Text(checkInDetailViewModel.item.status.rawValue)
-                        .font(.title3.weight(.semibold))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(statusColor(for: checkInDetailViewModel.item.status))
-                        .foregroundColor(.white)
-                        .clipShape(Capsule())
-                    
-                
-//                    Text("접수번호: \(checkInDetailViewModel.item.id)")
-//                        .font(.subheadline)
-//                        .foregroundColor(.gray)
+        ZStack {
+            Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // MARK: - 기본 정보 섹션
+                        DetailInfoSection(
+                            title: "수리 상세 정보",
+                            statusText: checkInDetailViewModel.item.status.rawValue,
+                            statusColor: statusColor(for: checkInDetailViewModel.item.status),
+                            rows: [
+                                ("접수번호", checkInDetailViewModel.item.id),
+                                ("차량번호", checkInDetailViewModel.item.carNumber),
+                                ("차주", checkInDetailViewModel.item.ownerName),
+                                ("차주번호", checkInDetailViewModel.item.phoneNumber),
+                                ("차종", checkInDetailViewModel.item.carModel),
+                                ("요청사항", checkInDetailViewModel.item.requestContent),
+                                ("접수일자", checkInDetailViewModel.item.date),
+                                ("담당자", checkInDetailViewModel.item.manager ?? "-")
+                            ]
+                        )
+                        
+                        // MARK: - 완료 정보
+                        if checkInDetailViewModel.item.status == .completed {
+                            DetailInfoSection(
+                                title: "수리 완료 정보",
+                                rows: [
+                                    ("완료일자", checkInDetailViewModel.item.completionDate ?? "-"),
+                                    ("수리내용", checkInDetailViewModel.item.repairDescription ?? "-"),
+                                    ("원인", checkInDetailViewModel.item.cause ?? "-"),
+                                    ("부품명", checkInDetailViewModel.item.partName ?? "-"),
+                                    ("수량", "\(checkInDetailViewModel.item.partQuantity ?? 0)"),
+                                    ("총가격", "\(checkInDetailViewModel.item.totalPrice ?? 0)원"),
+                                    ("소요일", "\(checkInDetailViewModel.item.leadTimeDays ?? 0)일")
+                                ]
+                            )
+                        }
+                        Spacer().frame(height: 80) // 버튼과의 간격 확보
+                    }
+                    .padding()
                 }
-                .padding(20)
                 
-                // 기본 정보 섹션
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("수리 상세 정보")
-                        .font(.headline)
-                        .padding(.bottom, 4)
-                    infoRow(title: "접수번호", value: checkInDetailViewModel.item.id)
-                    infoRow(title: "차량번호", value: checkInDetailViewModel.item.carNumber)
-                    infoRow(title: "차주", value: checkInDetailViewModel.item.ownerName)
-                    infoRow(title: "차주번호", value: checkInDetailViewModel.item.phoneNumber)
-                    infoRow(title: "차종", value: checkInDetailViewModel.item.carModel)
-                    infoRow(title: "요청사항", value: checkInDetailViewModel.item.requestContent)
-                    infoRow(title: "접수일자", value: checkInDetailViewModel.item.date)
-                    infoRow(title: "담당자", value: checkInDetailViewModel.item.manager ?? "-")
-                }
-                .padding()
-                .background(Color.white)
-                .cornerRadius(12)
-                .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-                
-                // 상태 변경 버튼
+                // MARK: - 하단 고정 버튼
                 if checkInDetailViewModel.item.status == .checkIn {
-                    actionButton(title: "수리 시작", color: .blue) {
+                    BaseButton(label: "수리 시작", backgroundColor: Color.blue) {
                         alertType = .startRepair
                         showAlert = true
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 24)
+                    .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: -1)
                 } else if checkInDetailViewModel.item.status == .inProgress {
-                    NavigationLink {
+                    bottomBarNavigationLink(title: "수리 완료", color: .green) {
                         CheckInCompletionView(detailViewModel: checkInDetailViewModel)
-                    } label: {
-                        Text("수리 완료")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
                     }
-                } else if checkInDetailViewModel.item.status == .completed {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("수리 완료 정보")
-                            .font(.headline)
-                            .padding(.bottom, 4)
-                        infoRow(title: "완료일자", value: checkInDetailViewModel.item.completionDate ?? "-")
-                        infoRow(title: "수리내용", value: checkInDetailViewModel.item.repairDescription ?? "-")
-                        infoRow(title: "원인", value: checkInDetailViewModel.item.cause ?? "-")
-                        infoRow(title: "부품명", value: checkInDetailViewModel.item.partName ?? "-")
-                        infoRow(title: "수량", value: "\(checkInDetailViewModel.item.partQuantity ?? 0)")
-                        infoRow(title: "총가격", value: "\(checkInDetailViewModel.item.totalPrice ?? 0)원")
-                        infoRow(title: "소요일", value: "\(checkInDetailViewModel.item.leadTimeDays ?? 0)일")
-                    }
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(12)
-                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
                 }
-                
-                Spacer(minLength: 40)
             }
-            .padding()
         }
         .navigationTitle("접수 상세")
         .navigationBarTitleDisplayMode(.inline)
-        .background(Color(UIColor.systemGroupedBackground))
         .alert(isPresented: $showAlert) {
             switch alertType {
             case .startRepair:
@@ -110,7 +89,7 @@ struct CheckInDetailView: View {
         }
     }
     
-    // infoRow 뷰
+    // MARK: - Info Row
     private func infoRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
@@ -122,21 +101,25 @@ struct CheckInDetailView: View {
         .font(.subheadline)
     }
     
-    // 버튼
-    private func actionButton(title: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(color)
-                .foregroundColor(.white)
-                .cornerRadius(12)
+    // MARK: - 하단 고정 NavigationLink 버튼
+    private func bottomBarNavigationLink<Destination: View>(title: String, color: Color, @ViewBuilder destination: () -> Destination) -> some View {
+        VStack {
+            NavigationLink(destination: destination()) {
+                Text(title)
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(color)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
+            }
         }
-        .shadow(color: .black.opacity(0.1), radius: 3, x: 0, y: 2)
+        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: -1)
     }
     
-    // 상태 색상
+    // MARK: - 상태 색상
     private func statusColor(for status: CheckInStatus) -> Color {
         switch status {
         case .checkIn: return .blue
@@ -145,7 +128,6 @@ struct CheckInDetailView: View {
         }
     }
 }
-
 
 #Preview("접수 상태") {
     NavigationView {
