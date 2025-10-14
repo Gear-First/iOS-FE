@@ -6,7 +6,7 @@ struct EditableField<T: LosslessStringConvertible>: View {
     var placeholder: String
     var isEditable: Bool = true
     var action: (() -> Void)? = nil
-
+    
     var body: some View {
         if isEditable {
             ZStack(alignment: .leading) {
@@ -14,7 +14,14 @@ struct EditableField<T: LosslessStringConvertible>: View {
                 TextField(
                     "",
                     text: Binding(
-                        get: { String(describing: value) },
+                        get: {
+                            if let doubleValue = value as? Double {
+                                // 항상 소수점 둘째 자리까지 표시
+                                return String(format: "%.2f", doubleValue)
+                            } else {
+                                return String(describing: value)
+                            }
+                        },
                         set: { newValue in
                             if let converted = T(newValue), !newValue.isEmpty {
                                 value = converted
@@ -33,7 +40,7 @@ struct EditableField<T: LosslessStringConvertible>: View {
                 .background(AppColor.mainWhite)
                 .cornerRadius(10)
                 .shadow(color: AppColor.mainBlack.opacity(0.05), radius: 3, x: 0, y: 1)
-
+                
                 // placeholder
                 if String(describing: value).isEmpty && !isFocused {
                     Text(placeholder)
@@ -68,13 +75,13 @@ struct EditableField<T: LosslessStringConvertible>: View {
             isEditable: false,
             action: { print("버튼 클릭") }
         )
-
+        
         // 텍스트 입력 모드
         EditableField(
             value: .constant(""),
             placeholder: "이름을 입력하세요"
         )
-
+        
         // 숫자 입력 모드
         EditableField(
             value: .constant(0),

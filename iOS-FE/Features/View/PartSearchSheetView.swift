@@ -1,7 +1,13 @@
 import SwiftUI
+import Foundation
 
-struct PartSearchSheetView: View {
-    @ObservedObject var viewModel: OrderRequestViewModel
+protocol PartSelectable: ObservableObject {
+    var name: String { get set }
+    var code: String { get set }
+}
+
+struct PartSearchSheetView<ViewModel: PartSelectable>: View {
+    @ObservedObject var viewModel: ViewModel
     @Environment(\.dismiss) var dismiss
     @State private var searchText = ""
 
@@ -28,27 +34,10 @@ struct PartSearchSheetView: View {
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         ForEach(filteredList, id: \.code) { item in
-                            Button {
-                                viewModel.orderName = item.name
-                                viewModel.orderCode = item.code
-                                dismiss()
-                            } label: {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    HStack {
-                                        Text(item.name)
-                                            .font(.headline)
-                                            .foregroundColor(AppColor.mainBlack)
-                                    }
-                                    Text(item.code)
-                                        .font(.subheadline)
-                                        .foregroundColor(AppColor.mainTextGray)
-                                    Divider()
-                                        .padding(.vertical, 6)
-                                }
-                            }
+                            partRow(item)
                         }
-                        .padding(.horizontal, 24)
                     }
+                    .padding(.horizontal, 24)
                 }
                 .padding(.top)
             }
@@ -56,7 +45,31 @@ struct PartSearchSheetView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
     }
+    
+    private func partRow(_ item: (name: String, code: String)) -> some View {
+        Button(action: {
+            viewModel.name = item.name
+            viewModel.code = item.code
+            dismiss()
+        }) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text(item.name)
+                        .font(.headline)
+                        .foregroundColor(AppColor.mainBlack)
+                }
+                Text(item.code)
+                    .font(.subheadline)
+                    .foregroundColor(AppColor.mainTextGray)
+                Divider()
+                    .padding(.vertical, 6)
+            }
+        }
+    }
 }
+
+
+
 
 #Preview {
     let mockViewModel = OrderRequestViewModel()

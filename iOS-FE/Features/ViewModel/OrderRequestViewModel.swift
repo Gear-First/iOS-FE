@@ -55,3 +55,15 @@ final class OrderRequestViewModel: ObservableObject {
         requestDate = Date()
     }
 }
+
+extension OrderRequestViewModel: PartSelectable {
+    var name: String {
+        get { orderName }
+        set { orderName = newValue }
+    }
+
+    var code: String {
+        get { orderCode }
+        set { orderCode = newValue }
+    }
+}

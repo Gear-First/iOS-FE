@@ -8,8 +8,9 @@ final class CheckInCompletionViewModel: ObservableObject {
     @Published var rawDateInput: String = ""     // yyyy-MM-dd 텍스트 입력
     @Published var completionDate: Date = Date()
     @Published var partName: String = ""
+    @Published var partCode: String = ""
     @Published var partQuantity: Int = 1
-    @Published var partPrice: Double = 0
+    @Published var partPrice: Double = 0.00
     
     // 모의 가격표
     private let mockPartPriceTable: [String: Double] = [
@@ -23,7 +24,6 @@ final class CheckInCompletionViewModel: ObservableObject {
     var totalPrice: Double {
         Double(partQuantity) * partPrice
     }
-    
     
     // 없으면 10,000 ~ 1,000,000원 사이 랜덤 가격을 자동 지정
     func autofillPriceIfMatches() {
@@ -44,6 +44,10 @@ final class CheckInCompletionViewModel: ObservableObject {
         f.dateFormat = "yyyy-MM-dd"
         return f
     }
+    
+    init() {
+            self.rawDateInput = fmt.string(from: completionDate)
+        }
     
     func syncTextFromDate() {
         rawDateInput = fmt.string(from: completionDate)
@@ -81,5 +85,17 @@ final class CheckInCompletionViewModel: ObservableObject {
             partPrice: partPrice,
             totalPrice: totalPrice
         )
+    }
+}
+
+extension CheckInCompletionViewModel: PartSelectable {
+    var name: String {
+        get { partName }
+        set { partName = newValue }
+    }
+
+    var code: String {
+        get { partCode }
+        set { partCode = newValue }
     }
 }

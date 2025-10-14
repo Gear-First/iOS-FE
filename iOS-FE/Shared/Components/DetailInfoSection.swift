@@ -50,3 +50,20 @@ struct DetailInfoSection: View {
         }
     }
 }
+
+#Preview {
+    DetailInfoSection(
+        title: "수리 상세정보",
+        statusText: "진행중",
+        statusColor: .blue,
+        rows: [
+            ("접수번호", "CHK-2025-001"),
+            ("차량번호", "34가 5678"),
+            ("차주명", "곽태근"),
+            ("차종", "그랜저"),
+            ("담당자", "권오윤"),
+            ("연락처", "010-3456-7890")
+        ]
+    )
+    .padding()
+}
