@@ -31,18 +31,19 @@ struct OrderHistoryView: View {
                 .padding(.horizontal)
                 
                 // MARK: - 발주 내역
-                ScrollView {
-                    if historyViewModel.filteredItems.isEmpty {
-                        VStack {
-                            Spacer()
-                            Text("발주 내역이 없습니다.")
-                                .foregroundColor(AppColor.mainTextGray)
-                                .font(.body)
-                                .padding()
-                            Spacer()
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 400)
-                    } else {
+                
+                if historyViewModel.filteredItems.isEmpty {
+                    VStack {
+                        Spacer()
+                        Text("발주 내역이 없습니다.")
+                            .foregroundColor(AppColor.mainTextGray)
+                            .font(.body)
+                            .padding()
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 400)
+                } else {
+                    ScrollView {
                         VStack(spacing: 12) {
                             ForEach(historyViewModel.filteredItems) { item in
                                 NavigationLink(
@@ -61,7 +62,7 @@ struct OrderHistoryView: View {
             .padding(.top, 12)
             .navigationTitle("발주 내역")
             .navigationBarTitleDisplayMode(.inline)
-//            .background(AppColor.bgGray)
+            .background(AppColor.bgGray)
         }
     }
     
