@@ -7,16 +7,18 @@ struct OrderDetailView: View {
     let item: OrderItem
     let onCancel: () -> Void
     
+    // MARK: - 상태에 따른 색상
     private var statusColor: Color {
-        OrderStatus(rawValue: item.status ?? "요청됨")?.badgeColor ?? .blue
+        item.orderStatus.badgeColor
     }
     
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
                 
+                // 상태 뱃지 + 발주번호
                 VStack(spacing: 12) {
-                    Text(item.status ?? "요청됨")
+                    Text(item.orderStatus.rawValue)
                         .font(.title3.weight(.semibold))
                         .foregroundColor(.white)
                         .padding(.horizontal, 16)
@@ -36,6 +38,7 @@ struct OrderDetailView: View {
                         .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 2)
                 )
                 
+                // 발주 정보
                 VStack(alignment: .leading, spacing: 16) {
                     infoRow(title: "부품", value: item.inventoryName)
                     infoRow(title: "부품코드", value: item.inventoryCode)
@@ -48,7 +51,8 @@ struct OrderDetailView: View {
                 .cornerRadius(12)
                 .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
                 
-                if item.status == "요청됨" {
+                // 요청 취소 버튼 (승인대기 상태일 때만)
+                if item.orderStatus == .승인대기 {
                     Button(action: { showCancelAlert = true }) {
                         Text("요청 취소하기")
                             .font(.headline)
@@ -83,15 +87,14 @@ struct OrderDetailView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: { dismiss() }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                    }
-                    .foregroundColor(AppColor.mainDarkBlue)
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(AppColor.mainDarkBlue)
                 }
             }
         }
     }
     
+    // MARK: - 정보 Row
     private func infoRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
@@ -114,7 +117,7 @@ struct OrderDetailView: View {
             quantity: 5,
             requestDate: "2025-10-04",
             id: "ORD-1234",
-            status: "요청됨"
+            orderStatus: .승인대기
         ),
         onCancel: {}
     )

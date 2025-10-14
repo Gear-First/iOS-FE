@@ -1,15 +1,30 @@
 import Foundation
 import SwiftUI
 
-enum OrderFilter: String, CaseIterable, Identifiable {
-    case all = "전체"
-    case requested = "요청됨"
-    case cancelled = "취소됨"
-    
-    var id: String { self.rawValue }
-}
-
 class OrderHistoryViewModel: ObservableObject {
+    
+    enum OrderFilter: String, CaseIterable, Identifiable {
+        case all = "전체"
+        case inProgress = "진행 중"
+        case completed = "완료"
+        case cancelled = "취소 / 반려"
+
+        var id: String { rawValue }
+
+        func matches(_ status: OrderStatus) -> Bool {
+            switch self {
+            case .all:
+                return true
+            case .inProgress:
+                return [.승인대기, .승인완료, .출고중].contains(status)
+            case .completed:
+                return [.납품완료].contains(status)
+            case .cancelled:
+                return [.취소, .반려].contains(status)
+            }
+        }
+    }
+    
     @Published var items: [OrderItem] = []
     @Published var selectedFilter: OrderFilter = .all
 
@@ -18,21 +33,19 @@ class OrderHistoryViewModel: ObservableObject {
     }
 
     var filteredItems: [OrderItem] {
-            switch selectedFilter {
-            case .all:
-                return items
-            default:
-                return items.filter { ($0.status ?? "").trimmingCharacters(in: .whitespacesAndNewlines) == selectedFilter.rawValue }
-            }
-        }
+        items.filter { selectedFilter.matches($0.orderStatus) }
+    }
     
     func addNewItem(_ item: OrderItem) {
         items.insert(item, at: 0)
     }
     
-    func cancelOrder(_ item: OrderItem) {
+    func updateOrderStatus(_ item: OrderItem, to newStatus: OrderStatus) {
         guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
-        items[index].status = "취소됨"
-        print("요청 \(item.id ?? "") 취소 완료")
+        items[index].orderStatus = newStatus
+    }
+    
+    func cancelOrder(_ item: OrderItem) {
+        updateOrderStatus(item, to: .취소)
     }
 }
