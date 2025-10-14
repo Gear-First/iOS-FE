@@ -3,132 +3,138 @@ import SwiftUI
 struct OrderRequestView: View {
     @StateObject private var viewModel = OrderRequestViewModel()
     @ObservedObject var historyViewModel: OrderHistoryViewModel
-    @State private var showDatePicker: Bool = false
     @Environment(\.dismiss) var dismiss
-    
+
+    @State private var showCarSearch = false
+    @State private var showPartSearch = false
+
     var body: some View {
         NavigationView {
-            VStack(spacing: 12) {
-                Spacer().frame(height: 40)
-                // 부품명 검색
-                TextField("부품명 검색", text: $viewModel.orderName)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 14) // ← 이게 진짜 높이를 키움
-                    .background(Color.white)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-                    )
-                
-                // 수량 입력
-                HStack {
-                    TextField("수량 입력", value: $viewModel.orderQuantity, formatter: NumberFormatter())
-                        .keyboardType(.numberPad)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 14)
-                        .frame(height: 48)
-                    
-                    VStack(spacing: 0) {
-                        Button(action: { viewModel.orderQuantity += 1 }) {
-                            Image(systemName: "chevron.up")
-                                .frame(width: 24, height: 24)
-                        }
-                        Button(action: {
-                            if viewModel.orderQuantity > 0 {
-                                viewModel.orderQuantity -= 1
+            VStack {
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // MARK: - 차량 선택
+                        SectionCard(title: "차량 선택") {
+                            EditableField(
+                                value: .constant(""),
+                                placeholder: "차량번호를 선택하세요",
+                                isEditable: false) {
+                                    showCarSearch.toggle()
+                                }
+                            
+                            if !viewModel.selectedCarType.isEmpty {
+                                HStack {
+                                    Text("차량번호")
+                                        .font(.subheadline)
+                                    Spacer()
+                                    Text(viewModel.selectedCarNumber)
+                                        .font(.subheadline)
+                                }
+                                .padding(.top, 4)
+                                HStack {
+                                    Text("차종")
+                                        .font(.subheadline)
+                                    Spacer()
+                                    Text(viewModel.selectedCarType)
+                                        .font(.subheadline)
+                                }
+                                .padding(.top, 4)
                             }
-                        }) {
-                            Image(systemName: "chevron.down")
-                                .frame(width: 24, height: 24)
+                        }
+                        
+                        // MARK: - 부품 선택
+                        if !viewModel.selectedCarNumber.isEmpty {
+                            SectionCard(title: "부품 선택") {
+                                EditableField(
+                                    value: .constant(""),
+                                    placeholder: "부품을 선택하세요",
+                                    isEditable: false) {
+                                        showPartSearch.toggle()
+                                    }
+                                
+                                if !viewModel.orderCode.isEmpty {
+                                    HStack {
+                                        Text("부품명")
+                                            .font(.subheadline)
+                                        Spacer()
+                                        Text(viewModel.orderName)
+                                            .font(.subheadline)
+                                    }
+                                    .padding(.top, 4)
+                                    HStack {
+                                        Text("부품 코드")
+                                            .font(.subheadline)
+                                        Spacer()
+                                        Text(viewModel.orderCode)
+                                            .font(.subheadline)
+                                    }
+                                    .padding(.top, 4)
+                                }
+                            }
+                        }
+                        
+                        // MARK: - 수량 입력
+                        if !viewModel.orderName.isEmpty {
+                            SectionCard(title: "수량 입력") {
+                                HStack {
+                                    EditableField(
+                                        value: $viewModel.orderQuantity,
+                                        placeholder: "수량",
+                                        isEditable: true)
+                                    
+                                    VStack(spacing: 0) {
+                                        Button(action: { viewModel.orderQuantity += 1 }) {
+                                            Image(systemName: "chevron.up")
+                                                .frame(width: 24, height: 24)
+                                        }
+                                        Button(action: {
+                                            if viewModel.orderQuantity > 1 {
+                                                viewModel.orderQuantity -= 1
+                                            }
+                                        }) {
+                                            Image(systemName: "chevron.down")
+                                                .frame(width: 24, height: 24)
+                                        }
+                                    }
+                                    .padding(.leading, 4)
+                                }
+                            }
                         }
                     }
-                    .padding(.trailing, 8)
                 }
-                .background(Color.white)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-                )
-                .cornerRadius(8)
-                
-                // 요청일
-                HStack(spacing: 0) {
-                    TextField("요청일 (yyyy-MM-dd)", text: $viewModel.rawDateInput)
-                        .keyboardType(.numbersAndPunctuation)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 14)
-                    
-                    Button(action: {
-                        withAnimation {
-                            showDatePicker.toggle()
-                        }
-                    }) {
-                        Image(systemName: "calendar")
-                            .padding(.horizontal, 12)
-                            .foregroundColor(.blue)
-                    }
+                .navigationTitle("부품 요청")
+                .navigationBarTitleDisplayMode(.inline)
+                .sheet(isPresented: $showCarSearch) {
+                    CarSearchSheetView(viewModel: viewModel)
                 }
-                .background(Color.white)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-                )
-                .cornerRadius(8)
-                
-                if showDatePicker {
-                    DatePicker(
-                        "",
-                        selection: $viewModel.requestDate,
-                        displayedComponents: .date
-                    )
-                    .datePickerStyle(.graphical)
+                .sheet(isPresented: $showPartSearch) {
+                    PartSearchSheetView(viewModel: viewModel)
                 }
-                
-                // 부품명 코드 (비활성화)
-                TextField("부품명 코드", text: $viewModel.orderCode)
-                    .disabled(true)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 14)
-                    .background(Color.white)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-                    )
-                
+                // MARK: - 요청 버튼
                 Button(action: {
                     let newItem = viewModel.submitRequestOrder()
                     historyViewModel.addNewItem(newItem)
+                    viewModel.resetForm()
                     dismiss()
                 }) {
                     Text("요청하기")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(AppColor.mainBlue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
+                        .font(.headline)
+                        .background(viewModel.isValid() ? AppColor.mainBlue : AppColor.mainTextGray.opacity(0.4))
+                        .foregroundColor(AppColor.mainWhite)
+                        .cornerRadius(10)
+                        .shadow(color: AppColor.mainBlack.opacity(0.1), radius: 4, x: 0, y: 2)
                 }
-                Spacer()
+                .disabled(!viewModel.isValid())
+                
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 12)
-            .navigationTitle("부품 요청")
-            .navigationBarTitleDisplayMode(.inline)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 24)
         }
     }
 }
 
 #Preview {
-    let dummyHistoryItems = [
-        OrderItem(
-            inventoryCode: "ORD-001",
-            inventoryName: "브레이크 패드",
-            quantity: 12,
-            requestDate: "2025-10-04",
-            id: "123",
-            status: "요청됨"
-        )
-    ]
-    
-    let viewModel = OrderHistoryViewModel(items: dummyHistoryItems)
-    OrderRequestView(historyViewModel: viewModel)
+    OrderRequestView(historyViewModel: OrderHistoryViewModel())
 }

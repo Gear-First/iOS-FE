@@ -1,40 +1,57 @@
 import Foundation
 import SwiftUI
 
-class OrderRequestViewModel: ObservableObject {
-    @Published var orderName: String = ""
-    @Published var orderQuantity: Int = 0
-    @Published var orderCode: String = ""
-    
-    // 날짜 변환
-    @Published var requestDate: Date = Date() {
-        didSet {
-            // 날짜 선택 시 문자열 자동 반영
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd"
-            let newString = formatter.string(from: requestDate)
-            
-            if rawDateInput != newString {
-                rawDateInput = newString
-            }
-        }
-    }
-    @Published var rawDateInput: String = ""
-    
-    // 요청 버튼
-    func submitRequestOrder() -> OrderItem {
+final class OrderRequestViewModel: ObservableObject {
+    // MARK: - 차량 관련
+    @Published var selectedCarNumber: String = ""
+    @Published var selectedCarType: String = ""
+
+    // MARK: - 부품 관련
+    @Published var orderName: String = ""     // 부품명
+    @Published var orderCode: String = ""     // 부품코드
+
+    // MARK: - 수량
+    @Published var orderQuantity: Int = 1
+
+    // MARK: - 날짜
+    @Published var requestDate: Date = Date()
+
+    // MARK: - 포맷터
+    private var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-        let dateString = formatter.string(from: requestDate)
-        
+        return formatter
+    }
+
+    // MARK: - 주문 생성
+    func submitRequestOrder() -> OrderItem {
+        let formattedDate = dateFormatter.string(from: requestDate)
         return OrderItem(
-            inventoryCode: "AB123",
-            inventoryName: orderName,
+            inventoryCode: orderCode.isEmpty ? "AUTO" : orderCode,
+            inventoryName: orderName.isEmpty ? "미지정 부품" : orderName,
             quantity: orderQuantity,
-            requestDate: dateString,
+            requestDate: formattedDate,
             id: String(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(16)),
-            status: "요청됨" // 목 데이터
+            status: OrderStatus.요청됨.rawValue
         )
     }
-    
+
+    // MARK: - 유효성 검사
+    func isValid() -> Bool {
+        return !selectedCarNumber.isEmpty &&
+               !selectedCarType.isEmpty &&
+               !orderName.isEmpty &&
+               !orderCode.isEmpty &&
+               orderQuantity > 0
+    }
+
+    // MARK: - 폼 초기화
+    func resetForm() {
+        selectedCarNumber = ""
+        selectedCarType = ""
+        orderName = ""
+        orderCode = ""
+        orderQuantity = 1
+        requestDate = Date()
+    }
 }
