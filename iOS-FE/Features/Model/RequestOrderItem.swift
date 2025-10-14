@@ -32,17 +32,21 @@ struct OrderItem: Identifiable, Codable {
 
 
 enum OrderStatus: String {
-    case 요청됨 = "요청됨"
-    case 승인됨 = "승인됨"
-    case 완료됨 = "완료됨"
-    case 취소됨 = "취소됨"
+    case 승인대기 = "승인 대기"
+    case 승인완료 = "승인 완료"
+    case 반려 = "반려"
+    case 출고중 = "출고 중"
+    case 납품완료 = "납품 완료"
+    case 취소 = "취소"
 
     var badgeColor: Color {
         switch self {
-        case .요청됨: return .blue
-        case .승인됨: return .green
-        case .완료됨: return .gray
-        case .취소됨: return .red
+        case .승인대기: return AppColor.mainBlue
+        case .승인완료: return AppColor.mainGreen
+        case .출고중: return AppColor.mainYellow
+        case .납품완료: return AppColor.mainGray
+        case .반려: return AppColor.mainRed
+        case .취소: return AppColor.mainRed.opacity(0.8)
         }
     }
 }

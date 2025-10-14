@@ -15,5 +15,8 @@ struct AppColor {
     static let mainBorderGray = Color(hex: "#E5E5E5")   // 바텀바 배경 / 테두리
     static let mainBlue = Color(hex: "#007AFF")         // 선택 색상
     static let mainDarkBlue = Color(hex: "#1E293B")
-    static let mainRed = Color(hex: "#FF3B30")          // 강조용
+    static let mainRed = Color(hex: "#FF3B30")
+    static let mainGray = Color(hex: "#8E8E93")
+    static let mainYellow = Color(hex: "#FFD60A")
+    static let mainGreen = Color(hex: "#34C759")
 }
