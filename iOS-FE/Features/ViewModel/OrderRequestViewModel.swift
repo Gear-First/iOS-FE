@@ -32,7 +32,7 @@ final class OrderRequestViewModel: ObservableObject {
             quantity: orderQuantity,
             requestDate: formattedDate,
             id: String(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(16)),
-            status: OrderStatus.승인대기.rawValue
+            orderStatus: OrderStatus.승인대기
         )
     }
 
