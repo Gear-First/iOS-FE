@@ -69,7 +69,9 @@ struct CarSearchSheetView: View {
                                         .font(.subheadline)
                                         .foregroundColor(AppColor.mainTextGray)
                                     Divider()
+                                        .padding(.vertical, 6)
                                 }
+                                
                             }
                         }
                         .padding(.horizontal, 24)

@@ -19,27 +19,46 @@ struct PartSearchSheetView: View {
     var body: some View {
         NavigationView {
             VStack {
-                TextField("부품명 입력", text: $searchText)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding()
-
-                List(filteredList, id: \.code) { part in
-                    Button {
-                        viewModel.orderName = part.name
-                        viewModel.orderCode = part.code
-                        dismiss()
-                    } label: {
-                        VStack(alignment: .leading) {
-                            Text(part.name)
-                            Text("코드: \(part.code)")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                EditableField(
+                    value: $searchText,
+                    placeholder: "부품명을 입력해주세요"
+                )
+                .padding(.horizontal, 12)
+                
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(filteredList, id: \.code) { item in
+                            Button {
+                                viewModel.orderName = item.name
+                                viewModel.orderCode = item.code
+                                dismiss()
+                            } label: {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    HStack {
+                                        Text(item.name)
+                                            .font(.headline)
+                                            .foregroundColor(AppColor.mainBlack)
+                                    }
+                                    Text(item.code)
+                                        .font(.subheadline)
+                                        .foregroundColor(AppColor.mainTextGray)
+                                    Divider()
+                                        .padding(.vertical, 6)
+                                }
+                            }
                         }
+                        .padding(.horizontal, 24)
                     }
                 }
+                .padding(.top)
             }
             .navigationTitle("부품 검색")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
+}
+
+#Preview {
+    let mockViewModel = OrderRequestViewModel()
+    return PartSearchSheetView(viewModel: mockViewModel)
 }
