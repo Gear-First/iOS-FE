@@ -25,12 +25,13 @@ struct DetailInfoSection: View {
                 Text(title)
                     .font(.title3)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(AppColor.mainBlack)
                 Spacer()
                 if let statusText, let statusColor {
                     Text(statusText)
                         .font(.callout)
                         .fontWeight(.semibold)
+                        .foregroundColor(AppColor.mainWhite)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .background(statusColor.opacity(0.9))
@@ -48,14 +49,14 @@ struct DetailInfoSection: View {
                     HStack(alignment: .firstTextBaseline) {
                         Text(row.title)
                             .font(.body)
-                            .foregroundColor(.gray)
+                            .foregroundColor(AppColor.mainTextGray)
                             .frame(width: 90, alignment: .leading)
 
                         Spacer()
 
                         Text(row.value)
                             .font(.body)
-                            .foregroundColor(.primary)
+                            .foregroundColor(AppColor.mainBlack)
                             .multilineTextAlignment(.trailing)
                     }
                     Divider()
