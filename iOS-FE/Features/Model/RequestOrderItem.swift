@@ -50,4 +50,16 @@ enum OrderStatus: String, Codable, CaseIterable, Identifiable {
         case .취소: return AppColor.mainRed.opacity(0.8)
         }
     }
+    
+    /// 진행도 단계 (0~1)
+    var progressValue: Double {
+        switch self {
+        case .승인대기: return 0.2
+        case .승인완료: return 0.4
+        case .출고중: return 0.7
+        case .납품완료: return 1.0
+        case .반려, .취소: return 0.0
+        }
+    }
 }
+
