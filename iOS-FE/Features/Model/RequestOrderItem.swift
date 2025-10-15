@@ -2,13 +2,18 @@ import Foundation
 import SwiftUI
 
 struct OrderItem: Identifiable, Codable {
-    var id: String { _id ?? UUID().uuidString }
+    let id: String
 
     let _id: String?
     let inventoryCode: String
     let inventoryName: String
     let quantity: Int
-    let requestDate: String
+    
+    var requestDate: String       // 승인대기
+    var approvalDate: String?     // 승인 완료
+    var deliveryStartDate: String?// 출고중
+    var deliveredDate: String?    // 납품 완료
+    
     var orderStatus: OrderStatus
 
     init(
@@ -16,6 +21,9 @@ struct OrderItem: Identifiable, Codable {
         inventoryName: String,
         quantity: Int,
         requestDate: String,
+        approvalDate: String? = nil,
+        deliveryStartDate: String? = nil,
+        deliveredDate: String? = nil,
         id: String? = nil,
         orderStatus: OrderStatus = .승인대기
     ) {
@@ -23,6 +31,10 @@ struct OrderItem: Identifiable, Codable {
         self.inventoryName = inventoryName
         self.quantity = quantity
         self.requestDate = requestDate
+        self.approvalDate = approvalDate
+        self.deliveryStartDate = deliveryStartDate
+        self.deliveredDate = deliveredDate
+        self.id = id ?? String(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(16))
         self._id = id
         self.orderStatus = orderStatus
     }
@@ -50,4 +62,16 @@ enum OrderStatus: String, Codable, CaseIterable, Identifiable {
         case .취소: return AppColor.mainRed.opacity(0.8)
         }
     }
+    
+    /// 진행도 단계 (0~1)
+    var progressValue: Double {
+        switch self {
+        case .승인대기: return 0.2
+        case .승인완료: return 0.4
+        case .출고중: return 0.7
+        case .납품완료: return 1.0
+        case .반려, .취소: return 0.0
+        }
+    }
 }
+

@@ -16,6 +16,7 @@ struct AppColor {
     static let mainBlue = Color(hex: "#007AFF")         // 선택 색상
     static let mainDarkBlue = Color(hex: "#1E293B")
     static let mainRed = Color(hex: "#FF3B30")
+    static let lightGray = Color(hex: "#cccccc")
     static let mainGray = Color(hex: "#8E8E93")
     static let mainYellow = Color(hex: "#FFD60A")
     static let mainGreen = Color(hex: "#34C759")
