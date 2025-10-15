@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUICore
 
-struct CheckInItem: Identifiable, Codable {
+struct CheckInItem: Identifiable {
     let id: String              // 접수번호
     let carNumber: String       // 차량번호
     let ownerName: String       // 차주명
@@ -11,6 +11,9 @@ struct CheckInItem: Identifiable, Codable {
     let phoneNumber: String     // 차주번호
     var manager: String?        // 담당자
     var status: CheckInStatus   // 상태
+    var leadTimeDays: Int?          // 소요일(요청일~완료일 일수)
+    
+    var completionInfos: [CheckInDetailViewModel.CompletionInfo]? = nil
     
     // 완료 후 채워지는 필드들
     var completionDate: String?     // 완료일자 (yyyy-MM-dd)
@@ -20,7 +23,6 @@ struct CheckInItem: Identifiable, Codable {
     var partQuantity: Int?
     var partPrice: Double?
     var totalPrice: Double?
-    var leadTimeDays: Int?          // 소요일(요청일~완료일 일수)
     
     // 날짜 차이 계산 헬퍼 (yyyy-MM-dd)
     static func daysBetween(_ from: String, _ to: String) -> Int? {

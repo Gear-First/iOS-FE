@@ -1,101 +1,76 @@
 import Foundation
-import SwiftUI
 
 final class CheckInCompletionViewModel: ObservableObject {
-    // 입력값
-    @Published var repairDescription: String = ""
-    @Published var cause: String = ""
-    @Published var rawDateInput: String = ""     // yyyy-MM-dd 텍스트 입력
-    @Published var completionDate: Date = Date()
-    @Published var partName: String = ""
-    @Published var partCode: String = ""
-    @Published var partQuantity: Int = 1
-    @Published var partPrice: Double = 0.00
+    @Published var items: [RepairItemForm] = [RepairItemForm()]  // 시작 시 하나
     
-    // 모의 가격표
-    private let mockPartPriceTable: [String: Double] = [
-        "엔진오일": 45000,
-        "브레이크 패드": 68000,
-        "타이어": 120000,
-        "에어컨 필터": 18000,
-        "배터리": 150000
-    ]
-    
-    var totalPrice: Double {
-        Double(partQuantity) * partPrice
-    }
-    
-    // 없으면 10,000 ~ 1,000,000원 사이 랜덤 가격을 자동 지정
-    func autofillPriceIfMatches() {
-        guard partName.trimmingCharacters(in: .whitespaces).count >= 2 else { return }
-            
-        if let p = mockPartPriceTable[partName] {
-            partPrice = p
-        } else {
-            let random = Double(Int.random(in: 10...1000) * 1000)
-            partPrice = random
-        }
-    }
-    
-    // yyyy-MM-dd 포맷 변환
-    private var fmt: DateFormatter {
+    // 오늘 날짜 고정
+    var todayString: String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "ko_KR")
         f.dateFormat = "yyyy-MM-dd"
-        return f
+        return f.string(from: Date())
+    }
+    
+    var totalSum: Double {
+        items.reduce(0) { $0 + $1.totalPrice }
     }
     
     init() {
-            self.rawDateInput = fmt.string(from: completionDate)
-        }
-    
-    func syncTextFromDate() {
-        rawDateInput = fmt.string(from: completionDate)
+        let first = RepairItemForm()
+        first.parentViewModel = self
+        items = [first]
     }
     
-    func syncDateFromText() {
-        if let d = fmt.date(from: rawDateInput) {
-            completionDate = d
-        }
+    func addItem() {
+        let new = RepairItemForm()
+        new.parentViewModel = self
+        items.append(new)
     }
     
-    // 제출 페이로드로 변환
-    func buildCompletionInfo() -> CheckInDetailViewModel.CompletionInfo? {
-        // 날짜 문자열 확정
-        let dateString: String
-        if !rawDateInput.isEmpty {
-            syncDateFromText()
-            dateString = rawDateInput
-        } else {
-            dateString = fmt.string(from: completionDate)
+    func canAddNewItem() -> Bool {
+        for form in items {
+            if form.description.trimmingCharacters(in: .whitespaces).isEmpty ||
+               form.cause.trimmingCharacters(in: .whitespaces).isEmpty ||
+               form.partName.trimmingCharacters(in: .whitespaces).isEmpty {
+                return false
+            }
+        }
+        return true
+    }
+    
+    func removeItem(_ id: UUID) {
+        items.removeAll { $0.id == id }
+    }
+    
+    func buildCompletionInfo() -> [CheckInDetailViewModel.CompletionInfo]? {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ko_KR")
+        f.dateFormat = "yyyy-MM-dd"
+        let today = f.string(from: Date())
+        
+        let mapped: [CheckInDetailViewModel.CompletionInfo] = items.compactMap { form in
+            guard !form.description.isEmpty,
+                  !form.cause.isEmpty,
+                  !form.partName.isEmpty
+            else { return nil }
+            
+            return CheckInDetailViewModel.CompletionInfo(
+                completionDate: today,
+                repairDescription: form.description,
+                cause: form.cause,
+                partName: form.partName,
+                partQuantity: form.quantity,
+                partPrice: form.unitPrice,
+                totalPrice: form.totalPrice
+            )
         }
         
-        guard !repairDescription.trimmingCharacters(in: .whitespaces).isEmpty,
-              !cause.trimmingCharacters(in: .whitespaces).isEmpty,
-              !partName.trimmingCharacters(in: .whitespaces).isEmpty,
-              partQuantity > 0, partPrice >= 0
-        else { return nil }
-        
-        return .init(
-            completionDate: dateString,
-            repairDescription: repairDescription,
-            cause: cause,
-            partName: partName,
-            partQuantity: partQuantity,
-            partPrice: partPrice,
-            totalPrice: totalPrice
-        )
+        return mapped.isEmpty ? nil : mapped
     }
-}
-
-extension CheckInCompletionViewModel: PartSelectable {
-    var name: String {
-        get { partName }
-        set { partName = newValue }
-    }
-
-    var code: String {
-        get { partCode }
-        set { partCode = newValue }
+    
+    // 10,000 ~ 1,000,000원 사이 랜덤 가격을 자동 지정
+    func autofillRandomPrice(for form: RepairItemForm) {
+        let random = Double(Int.random(in: 10...1000) * 1000)
+        form.unitPrice = random
     }
 }
