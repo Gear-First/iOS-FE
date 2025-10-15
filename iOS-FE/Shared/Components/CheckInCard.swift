@@ -2,42 +2,56 @@ import SwiftUI
 
 struct CheckInCard: View {
     let item: CheckInItem
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("접수번호: \(item.id)")
-                .font(.headline)
-                .foregroundColor(.primary)
             
+            // MARK: - 접수번호 (상단 타이틀)
             HStack {
-                Text("차주:")
-                    .font(.subheadline)
+                Text(item.id)
+                    .font(.title3)
+                    .foregroundColor(.primary)
+                    .fontWeight(.semibold)
                 Spacer()
-                Text("\(item.ownerName)")
-                    .font(.subheadline)
+            }
+            .padding(.bottom, 2)
+            
+            Divider()
+                .padding(.vertical, -4)
+            
+            // MARK: 차량 정보 섹션
+            VStack(alignment: .leading, spacing: 8) {
+                infoRow(label: "차주", value: item.ownerName)
+                infoRow(label: "차량번호", value: item.carNumber)
             }
             
             HStack {
-                Text("차량번호:")
-                    .font(.subheadline)
                 Spacer()
-                Text("\(item.carNumber)")
-                    .font(.subheadline)
-            }
-            
-            HStack {
-            Spacer()
                 Text(item.date)
-                    .font(.caption)
+                    .font(.footnote)
                     .foregroundColor(.gray)
-                    .padding(.top, 4)
             }
+            .padding(.top, 4)
         }
-        .padding()
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+    }
+    
+    // MARK: Helper Row
+    private func infoRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 16))
+                    .foregroundColor(.secondary)
+            Spacer()
+            Text(value)
+                .font(.system(size: 16))
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
+        }
     }
 }
 
