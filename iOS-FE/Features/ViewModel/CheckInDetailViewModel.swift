@@ -36,3 +36,31 @@ final class CheckInDetailViewModel: ObservableObject {
         let totalPrice: Double
     }
 }
+
+//extension CheckInDetailViewModel {
+//    func applyMultipleCompletionInfo(_ infos: [CompletionInfo]) {
+//        // 여러 항목 정보를 처리하는 로직
+//        for info in infos {
+//            print("완료 처리:", info.repairDescription, info.partName, info.totalPrice)
+//        }
+//    }
+//}
+
+extension CheckInDetailViewModel {
+    func applyMultipleCompletionInfo(_ infos: [CompletionInfo]) {
+        item.status = .completed
+        item.completionInfos = infos
+        
+        let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            
+            if
+                let start = formatter.date(from: item.date),
+                let end = formatter.date(from: infos.first?.completionDate ?? "")
+            {
+                item.leadTimeDays = Calendar.current.dateComponents([.day], from: start, to: end).day ?? 0
+            } else {
+                item.leadTimeDays = nil
+            }
+    }
+}

@@ -3,9 +3,6 @@ import SwiftUI
 struct CheckInCompletionView: View {
     @ObservedObject var detailViewModel: CheckInDetailViewModel
     @StateObject private var formVM = CheckInCompletionViewModel()
-    @State private var showDatePicker: Bool = false
-    @State private var showPartSearch = false
-    @State private var showQuantityPicker = false
     @Environment(\.dismiss) private var dismiss
     @State private var showConfirm = false
     @State private var showInvalidAlert = false
@@ -15,194 +12,79 @@ struct CheckInCompletionView: View {
             Color(AppColor.bgGray)
                 .ignoresSafeArea()
             
-            VStack(spacing: 0) {
+            VStack {
                 ScrollView {
-                    VStack(spacing: 12) {
-                        Spacer().frame(height: 8)
-                        
-                        // MARK: 완료일
-                        HStack(spacing: 0) {
-                            TextField("완료일 (yyyy-MM-dd)", text: $formVM.rawDateInput, onEditingChanged: { _ in
-                                formVM.syncDateFromText()
-                            })
-                            .keyboardType(.numbersAndPunctuation)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 14)
-                            
-                            Button(action: {
-                                withAnimation { showDatePicker.toggle() }
-                            }) {
-                                Image(systemName: "calendar")
-                                    .padding(.horizontal, 12)
-                                    .foregroundColor(.blue)
-                            }
-                        }
-                        .background(Color.white)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.5), lineWidth: 1))
-                        .cornerRadius(8)
-                        
-                        if showDatePicker {
-                            DatePicker("", selection: $formVM.completionDate, displayedComponents: .date)
-                                .datePickerStyle(.graphical)
-                                .onChange(of: formVM.completionDate) { _ in
-                                    formVM.syncTextFromDate()
+                    VStack(spacing: 20) {
+                        // MARK: 카드 리스트
+                        ForEach(formVM.items) { item in
+                            RepairItemCard(form: item) {
+                                if formVM.items.count > 1 {
+                                    formVM.removeItem(item.id)
                                 }
-                        }
-                        
-                        // MARK: 수리내용
-                        TextField("수리내용", text: $formVM.repairDescription)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 14)
-                            .background(Color.white)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.5), lineWidth: 1))
-                            .cornerRadius(8)
-                        
-                        // MARK: 원인
-                        TextField("원인", text: $formVM.cause)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 14)
-                            .background(Color.white)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.5), lineWidth: 1))
-                            .cornerRadius(8)
-                        
-                        // MARK: 부품 선택
-                        SectionCard(title: "부품 선택") {
-                            EditableField(
-                                value: $formVM.partName,
-                                placeholder: "부품을 선택하세요",
-                                isEditable: false
-                            ) {
-                                showPartSearch.toggle()
-                            }
-                            .onChange(of: formVM.partName) { _ in
-                                    formVM.autofillPriceIfMatches()
-                                }
-                            if !formVM.partCode.isEmpty {
-                                HStack {
-                                    Text("부품명")
-                                        .font(.subheadline)
-                                    Spacer()
-                                    Text(formVM.partName)
-                                        .font(.subheadline)
-                                }
-                                .padding(.top, 4)
-                                HStack {
-                                    Text("부품 코드")
-                                        .font(.subheadline)
-                                    Spacer()
-                                    Text(formVM.partCode)
-                                        .font(.subheadline)
-                                }
-                                .padding(.top, 4)
                             }
                         }
                         
-                        // MARK: 수량 + 가격
-                        HStack(spacing: 8) {
-                            // 가격(개당)
-                            VStack(alignment: .leading, spacing: 4) {
-                                    EditableField(
-                                        value: $formVM.partPrice,
-                                        placeholder: "가격(개당)",
-                                        isEditable: true
-                                    )
-                                    .keyboardType(.numbersAndPunctuation)
-                                    .frame(maxWidth: .infinity)
-                                }
-                            // 수량 (아이콘 포함)
-                            ZStack {
-                                EditableField(
-                                    value: $formVM.partQuantity,
-                                    placeholder: "수량",
-                                    isEditable: true
-                                )
-                                .keyboardType(.numberPad)
-                                .padding(.trailing, 36) // 아이콘 공간 확보
-                                
-                                HStack {
-                                    Spacer()
-                                    Button(action: { showQuantityPicker = true }) {
-                                        Image(systemName: "chevron.up.chevron.down")
-                                            .foregroundColor(AppColor.mainTextGray)
-                                            .frame(width: 36, height: 44)
-                                            .background(AppColor.mainWhite)
-                                    }
-                                    .padding(.trailing, 8)
-                                }
+                        // MARK: 수리 항목 추가 버튼
+                        Button {
+                            if formVM.canAddNewItem() {
+                                formVM.addItem()
+                            } else {
+                                showInvalidAlert = true
                             }
-                            .background(AppColor.mainWhite)
-                            .cornerRadius(10)
-                            .shadow(color: AppColor.mainBlack.opacity(0.05), radius: 3, x: 0, y: 1)
-                            .frame(width: 120)
-                        }
-                        
-                        // MARK: 총가격
-                        HStack {
-                            Text("총가격")
-                            Spacer()
-                            Text(numberToCurrency(formVM.totalPrice))
+                        } label: {
+                            Label("수리 항목 추가", systemImage: "plus.circle.fill")
                                 .font(.headline)
+                                .foregroundColor(.blue)
                         }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(8)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.15), lineWidth: 1))
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 12)
-                    .padding(.bottom, 20)
-                }
-                
-                // 피커 시트
-                .sheet(isPresented: $showQuantityPicker) {
-                    VStack {
-                        Text("수량 선택")
-                            .font(.headline)
-                            .padding()
-                        Divider()
-                        Picker("수량", selection: $formVM.partQuantity) {
-                            ForEach(1..<101, id: \.self) { num in
-                                Text("\(num)").tag(num)
-                            }
-                        }
-                        .pickerStyle(WheelPickerStyle())
-                        .labelsHidden()
-                        
-                        Button("완료") {
-                            showQuantityPicker = false
-                        }
-                        .padding()
-                    }
-                    .presentationDetents([.fraction(0.4)]) // 높이 조정 가능
-                }
-                
-                // MARK: - 하단 고정 버튼
-                VStack {
-                    BaseButton(label: "완료 제출", backgroundColor: Color.green) {
-                        if let info = formVM.buildCompletionInfo() {
-                            showConfirm = true
-                        } else {
-                            showInvalidAlert = true
-                        }
+                        .padding(.top, 8)
                     }
                     .padding(.horizontal, 20)
-                    .padding(.vertical, 24)
-                    .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: -1)
+                    .padding(.top, 16)
                 }
+                
+                HStack {
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("총 합계")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                        Text(formattedPrice(formVM.totalSum))
+                            .font(.title2)
+                            .bold()
+                            .foregroundColor(AppColor.mainBlue)
+                    }
+                }
+                .padding(.vertical, 16)
+                .padding(.horizontal, 24)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.white)
+                        .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+                )
+                .padding(.horizontal, 20)
+
+                
+                // MARK: 완료 제출 버튼
+                BaseButton(label: "완료 제출", backgroundColor: .green) {
+                    if let infoList = formVM.buildCompletionInfo() {
+                        showConfirm = true
+                    } else {
+                        showInvalidAlert = true
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
             }
         }
-        .navigationTitle("완료 입력")
+        .navigationTitle("수리 완료 입력")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showPartSearch) {
-            PartSearchSheetView(viewModel: formVM)
-        }
         .alert("입력 값을 확인해주세요.", isPresented: $showInvalidAlert) {
             Button("확인", role: .cancel) {}
         }
         .alert("정말 완료 처리하시겠어요?", isPresented: $showConfirm) {
             Button("완료", role: .destructive) {
-                guard let info = formVM.buildCompletionInfo() else { return }
-                detailViewModel.applyCompletionInfo(info)
+                guard let infoList = formVM.buildCompletionInfo() else { return }
+                detailViewModel.applyMultipleCompletionInfo(infoList)
                 dismiss()
             }
             Button("취소", role: .cancel) {}
@@ -211,23 +93,12 @@ struct CheckInCompletionView: View {
         }
     }
     
-    // 통화 포맷터
-    private var currencyFormatter: NumberFormatter {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal
-        f.maximumFractionDigits = 0
-        return f
-    }
-    
-    private func numberToCurrency(_ n: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal
-        f.minimumFractionDigits = 2
-        f.maximumFractionDigits = 2
-        return (f.string(from: NSNumber(value: n)) ?? "0.00") + "원"
+    func formattedPrice(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return (formatter.string(from: NSNumber(value: value)) ?? "0") + "원"
     }
 }
-
 
 
 #Preview {
