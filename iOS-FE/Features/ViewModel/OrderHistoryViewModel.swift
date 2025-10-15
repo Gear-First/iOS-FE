@@ -28,14 +28,70 @@ class OrderHistoryViewModel: ObservableObject {
     @Published var items: [OrderItem] = []
     @Published var selectedFilter: OrderFilter = .all
 
-    init(items: [OrderItem] = []) {
-        self.items = items
+    // MARK: - 목데이터
+    static let mockItems: [OrderItem] = [
+        OrderItem(
+            inventoryCode: "INV-001",
+            inventoryName: "브레이크 패드",
+            quantity: 5,
+            requestDate: "2025-10-04",
+            orderStatus: .승인대기
+        ),
+        OrderItem(
+            inventoryCode: "INV-002",
+            inventoryName: "에어필터",
+            quantity: 2,
+            requestDate: "2025-10-03",
+            approvalDate: "2025-10-04",
+            orderStatus: .승인완료
+        ),
+        OrderItem(
+            inventoryCode: "INV-003",
+            inventoryName: "오일필터1",
+            quantity: 1,
+            requestDate: "2025-10-04",
+            orderStatus: .취소
+        ),
+        OrderItem(
+            inventoryCode: "INV-004",
+            inventoryName: "오일필터",
+            quantity: 1,
+            requestDate: "2025-10-05",
+            deliveredDate: "2025-10-06",
+            orderStatus: .납품완료
+        ),
+        OrderItem(
+            inventoryCode: "INV-005",
+            inventoryName: "오일필터",
+            quantity: 1,
+            requestDate: "2025-10-06",
+            deliveryStartDate: "2025-10-07",
+            orderStatus: .출고중
+        ),
+        OrderItem(
+            inventoryCode: "INV-006",
+            inventoryName: "오일필터",
+            quantity: 1,
+            requestDate: "2025-10-07",
+            orderStatus: .반려
+        )
+    ]
+    
+    // MARK: - Init
+    /// 초기화 시 목데이터 사용 가능, 나중에 API 데이터로 교체 가능
+    init(useMockData: Bool = true, items: [OrderItem] = []) {
+        if useMockData {
+            self.items = Self.mockItems
+        } else {
+            self.items = items
+        }
     }
 
     var filteredItems: [OrderItem] {
         items.filter { selectedFilter.matches($0.orderStatus) }
     }
     
+    // MARK: - Methods
     func addNewItem(_ item: OrderItem) {
         items.insert(item, at: 0)
     }

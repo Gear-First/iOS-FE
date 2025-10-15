@@ -14,11 +14,27 @@ struct OrderDetailView: View {
 //            ScrollView {
                     VStack {
                         SectionCard(title: "진행 상황") {
+                            // Step 배열
+                            let steps = OrderStatus.allCases.filter { $0.progressValue > 0 }
+                            
+                            // 날짜 딕셔너리
+                            let stepDates: [OrderStatus: String] = [
+                                .승인대기: item.requestDate,
+                                .승인완료: item.approvalDate ?? "",
+                                .출고중: item.deliveryStartDate ?? "",
+                                .납품완료: item.deliveredDate ?? ""
+                            ]
+                            
+                            // 취소/반려 여부
+                            let special: OrderStatus? = [.취소, .반려].contains(item.orderStatus) ? item.orderStatus : nil
+                            
                             StepProgressView(
-                                steps: OrderStatus.allCases.filter { $0.progressValue > 0 },
+                                steps: steps,
                                 currentStep: item.orderStatus,
-                                colorProvider: { $0.progressValue != 0 ? AppColor.mainBlue : .clear },
-                                labelProvider: { $0.rawValue }
+                                colorProvider: { _ in AppColor.mainBlue },
+                                labelProvider: { $0.rawValue },
+                                dates: stepDates,
+                                specialStatus: special
                             )
                         }
                         .padding(.vertical, 24)
@@ -45,7 +61,7 @@ struct OrderDetailView: View {
 //            }
 
             Spacer()
-                if item.orderStatus == .승인대기 {
+                if item.orderStatus == .승인대기 || item.orderStatus == .승인완료 {
                     BaseButton(
                         label: "요청 취소",
                         backgroundColor: .red,
