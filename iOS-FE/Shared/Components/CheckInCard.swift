@@ -16,14 +16,6 @@ struct CheckInCard: View {
                 
                 if showStatus {
                     Spacer()
-//                    Text(item.status.rawValue)
-//                        .font(.callout)
-//                        .fontWeight(.medium)
-//                        .padding(.horizontal, 8)
-//                        .padding(.vertical, 4)
-//                        .background(statusColor(for: item.status).opacity(0.15))
-//                        .foregroundColor(statusColor(for: item.status))
-//                        .cornerRadius(8)
                     Text(item.status.rawValue)
                         .font(.callout)
                         .fontWeight(.medium)
@@ -33,9 +25,7 @@ struct CheckInCard: View {
                         .foregroundColor(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                         .cornerRadius(8)
-                    
                 }
-                
             }
             .padding(.bottom, 2)
             
@@ -86,6 +76,7 @@ struct CheckInCard: View {
     }
 }
 
+// MARK: - Preview
 #Preview("상태 표시") {
     let mockItem = CheckInItem(
         id: "CHK-2025",
