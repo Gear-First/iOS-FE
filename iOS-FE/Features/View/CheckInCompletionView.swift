@@ -10,7 +10,6 @@ struct CheckInCompletionView: View {
     @State private var showQuantityPicker = false
     @State private var selectedQuantityPart: RepairPartForm?
     
-//    @State private var showContent: Bool
     @State private var showConfirm = false
     @State private var showInvalidAlert = false
     
@@ -18,7 +17,7 @@ struct CheckInCompletionView: View {
         VStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    // MARK: 카드 리스트
+                    // MARK: - 카드 리스트
                     ForEach(formVM.items) { item in
                         RepairItemCard(
                             form: item,
@@ -38,8 +37,7 @@ struct CheckInCompletionView: View {
                             onShowContent: true
                             )
                         }
-                
-                    // MARK: 수리 항목 추가 버튼
+                    // MARK: - 수리 항목 추가 버튼
                     Button {
                         if formVM.canAddNewItem() {
                             formVM.addItem()
@@ -57,7 +55,7 @@ struct CheckInCompletionView: View {
                 .padding(.top, 16)
             }
             
-            // MARK: 완료 제출 버튼
+            // MARK: - 완료 제출 버튼
             BaseButton(label: "완료 제출", backgroundColor: .green) {
                 if formVM.canAddNewItem() {
                     showConfirm = true
@@ -71,13 +69,10 @@ struct CheckInCompletionView: View {
         .background(Color(AppColor.bgGray).ignoresSafeArea())
         .navigationTitle("수리 완료 입력")
         .navigationBarTitleDisplayMode(.inline)
-        
-        // 진짜 시트 사용
         .sheet(item: $selectedPart) { part in
                     PartSearchSheetView(viewModel: part)
                         .presentationDetents([.height(420)])
                 }
-        
         .sheet(item: $selectedQuantityPart) { part in
                     VStack {
                         Text("수량 선택")
@@ -103,8 +98,6 @@ struct CheckInCompletionView: View {
                     .cornerRadius(16)
                     .presentationDetents([.height(350)])
                 }
-        
-        // ALERTS
         .alert("입력 값을 확인해주세요.", isPresented: $showInvalidAlert) {
             Button("확인", role: .cancel) {}
         }
@@ -125,6 +118,7 @@ struct CheckInCompletionView: View {
     }
 }
 
+// MARK: - Preview
 #Preview {
     NavigationView {
         CheckInCompletionView(

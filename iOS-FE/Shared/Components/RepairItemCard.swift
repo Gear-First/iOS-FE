@@ -6,7 +6,6 @@ struct RepairItemCard: View {
     var title: String = "항목"
     var onRemove: (() -> Void)?
     
-    // 부모에서 시트를 띄우기 위한 콜백 전달
     var onShowPartSearch: ((RepairPartForm) -> Void)?
     var onShowQuantityPicker: ((RepairPartForm) -> Void)?
     var onShowContent: Bool
@@ -67,6 +66,7 @@ struct RepairItemCard: View {
     }
 }
 
+// MARK: - Preview
 //#Preview {
 //    let repairForm = RepairItemForm()
 //    repairForm.description = "엔진오일 교체"

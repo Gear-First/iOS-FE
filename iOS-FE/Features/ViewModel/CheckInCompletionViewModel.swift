@@ -19,13 +19,7 @@ final class CheckInCompletionViewModel: ObservableObject {
         f.dateFormat = "yyyy-MM-dd"
         return f.string(from: Date())
     }
-//    
-//    init() {
-//        let first = RepairItemForm()
-//        first.parentViewModel = self
-//        items = [first]
-//    }
-//    
+ 
     func addItem() {
         let new = RepairItemForm()
         new.parentViewModel = self
