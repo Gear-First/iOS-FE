@@ -14,11 +14,11 @@ struct CheckInDetailView: View {
         ZStack {
             Color(AppColor.bgGray)
                 .ignoresSafeArea()
-            
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: 20) {
-                        // MARK: 기본 정보 섹션
+
+                        // MARK: - 기본 정보 섹션
                         DetailInfoSection(
                             title: "수리 상세 정보",
                             statusText: checkInDetailViewModel.item.status.rawValue,
@@ -50,24 +50,24 @@ struct CheckInDetailView: View {
                             }()
                         )
                         
-                        // MARK: 완료 정보
+                        // MARK: - 완료 정보
                         if checkInDetailViewModel.item.status == .completed {
                             if let infos = checkInDetailViewModel.item.completionInfos {
                                 VStack(alignment: .leading, spacing: 14) {
                                     // MARK: 제목
                                     let grouped = Dictionary(grouping: infos, by: { $0.repairDescription })
-                                                HStack {
-                                                    Text("수리 완료 정보")
-                                                        .font(.title3)
-                                                        .fontWeight(.semibold)
-                                                    Spacer()
-                                                    Text("총 \(grouped.keys.count)건")
-                                                        .font(.callout)
-                                                        .foregroundColor(.gray)
-                                                }
-                                                
-                                                Divider().padding(.bottom, 6)
-                                                
+                                    HStack {
+                                        Text("수리 완료 정보")
+                                            .font(.title3)
+                                            .fontWeight(.semibold)
+                                        Spacer()
+                                        Text("총 \(grouped.keys.count)건")
+                                            .font(.callout)
+                                            .foregroundColor(.gray)
+                                    }
+                                    
+                                    Divider().padding(.bottom, 6)
+                                    
                                     ForEach(Array(grouped.keys.enumerated()), id: \.1) { index, key in
                                         if let group = grouped[key], let first = group.first {
                                             VStack(alignment: .leading, spacing: 10) {
@@ -78,7 +78,8 @@ struct CheckInDetailView: View {
                                                     Text("원인: \(first.cause)")
                                                         .font(.body)
                                                 }
-                                                // MARK: 부품 리스트
+                                                
+                                                // MARK: - 부품 리스트
                                                 VStack(alignment: .leading, spacing: 6) {
                                                     ForEach(group, id: \.partName) { part in
                                                         VStack(alignment: .leading, spacing: 2) {
@@ -99,8 +100,8 @@ struct CheckInDetailView: View {
                                                     }
                                                 }
                                                 .padding(.horizontal, 2)
-
-                                                // MARK: 항목 합계
+                                                
+                                                // MARK: - 항목 합계
                                                 HStack {
                                                     Spacer()
                                                     Text("항목 합계: \(formattedPrice(group.reduce(0) { $0 + $1.totalPrice }))")
@@ -112,17 +113,16 @@ struct CheckInDetailView: View {
                                             Divider().padding(.vertical, 4)
                                         }
                                     }
-
-                                                
-                                                // MARK: 총 합계
-                                                HStack {
-                                                    Spacer()
-                                                    Text("총 합계: \(formattedPrice(totalPrice(of: infos)))")
-                                                        .font(.title3)
-                                                        .fontWeight(.bold)
-                                                        .foregroundColor(AppColor.mainBlue)
-                                                }
-                                                .padding(.top, 12)
+                                    
+                                    // MARK: - 총 합계
+                                    HStack {
+                                        Spacer()
+                                        Text("총 합계: \(formattedPrice(totalPrice(of: infos)))")
+                                            .font(.title3)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(AppColor.mainBlue)
+                                    }
+                                    .padding(.top, 12)
                                 }
                                 .padding(20)
                                 .background(
@@ -140,7 +140,7 @@ struct CheckInDetailView: View {
                     .padding()
                 }
                 
-                // MARK: 하단 고정 버튼
+                // MARK: - 하단 고정 버튼
                 if checkInDetailViewModel.item.status == .checkIn {
                     BaseButton(label: "수리 시작", backgroundColor: Color.blue) {
                         alertType = .startRepair
@@ -152,9 +152,9 @@ struct CheckInDetailView: View {
                 } else if checkInDetailViewModel.item.status == .inProgress {
                     bottomBarNavigationLink(title: "수리 완료", color: .green) {
                         CheckInCompletionView(
-                                detailViewModel: checkInDetailViewModel,
-                                formVM: checkInDetailViewModel.completionFormVM
-                            )
+                            detailViewModel: checkInDetailViewModel,
+                            formVM: checkInDetailViewModel.completionFormVM
+                        )
                     }
                 }
             }
@@ -168,7 +168,6 @@ struct CheckInDetailView: View {
                     title: Text("수리를 시작하시겠습니까?"),
                     message: Text("담당자 정보가 등록됩니다."),
                     primaryButton: .destructive(Text("확인")) {
-                        //  API 호출
                         checkInDetailViewModel.startRepair()
                     },
                     secondaryButton: .cancel(Text("취소"))
@@ -179,7 +178,7 @@ struct CheckInDetailView: View {
         }
     }
     
-    // MARK: Info Row
+    // MARK: - Info Row
     private func infoRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
@@ -191,7 +190,7 @@ struct CheckInDetailView: View {
         .font(.subheadline)
     }
     
-    // MARK: 하단 고정 NavigationLink 버튼
+    // MARK: - 수리 중 버튼
     private func bottomBarNavigationLink<Destination: View>(title: String, color: Color, @ViewBuilder destination: () -> Destination) -> some View {
         VStack {
             NavigationLink(destination: destination()) {
@@ -209,7 +208,7 @@ struct CheckInDetailView: View {
         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: -1)
     }
     
-    // MARK: 상태 색상
+    // MARK: - 상태 색상
     private func statusColor(for status: CheckInStatus) -> Color {
         switch status {
         case .checkIn: return .blue
@@ -218,10 +217,12 @@ struct CheckInDetailView: View {
         }
     }
     
+    // MARK: - 총 합계
     private func totalPrice(of infos: [CheckInDetailViewModel.CompletionInfo]) -> Double {
         infos.reduce(0) { $0 + $1.totalPrice }
     }
     
+    // MARK: - 가격 스타일링
     private func formattedPrice(_ value: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
@@ -230,6 +231,7 @@ struct CheckInDetailView: View {
     
 }
 
+// MARK: - Preview
 #Preview("접수 상태") {
     NavigationView {
         CheckInDetailView(
@@ -313,8 +315,6 @@ struct CheckInDetailView: View {
                             partPrice: 3000,
                             totalPrice: 3000
                         ),
-
-                        // ✅ 다른 항목 예시
                         CheckInDetailViewModel.CompletionInfo(
                             completionDate: "2025-10-13",
                             repairDescription: "브레이크 패드 교체",

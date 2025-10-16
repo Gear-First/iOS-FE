@@ -6,7 +6,7 @@ struct MyCheckInListView: View {
     @State private var selectedFilter: CheckInStatus? = nil
     
     
-    // MARK: 담당자 필터링 + 상태 필터링 + 검색 적용된 결과
+    // MARK: - 담당자 필터링 + 상태 필터링 + 검색 적용된 결과
     private var filteredItems: [CheckInItem] {
         checkInListViewModel.items.filter { item in
             // MARK: 상태 필터 (nil = 전체)
@@ -14,7 +14,7 @@ struct MyCheckInListView: View {
                 return false
             }
             
-            // MARK: 검색 필터 (차주명, 차량번호, 차종)
+            // MARK: - 검색 필터 (차주명, 차량번호, 차종)
             if !searchText.isEmpty {
                 let lower = searchText.lowercased()
                 return item.ownerName.lowercased().contains(lower)
@@ -59,7 +59,7 @@ struct MyCheckInListView: View {
                 .frame(height: 40)
                 .padding(.horizontal)
                 
-                // MARK: 상단 검색창
+                // MARK: - 상단 검색창
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.gray)
@@ -82,7 +82,7 @@ struct MyCheckInListView: View {
                 }
                 .padding(.horizontal, 20)
                 
-                // 리스트 영역
+                // MARK: - 리스트 영역
                 if checkInListViewModel.isLoading {
                     VStack {
                         Spacer()
@@ -112,7 +112,7 @@ struct MyCheckInListView: View {
                     }
                 }
             }
-            .navigationTitle("내 접수 내역")
+            .navigationTitle("접수 내역")
             .navigationBarTitleDisplayMode(.inline)
             .background(Color(AppColor.bgGray))
             .task {
@@ -123,6 +123,7 @@ struct MyCheckInListView: View {
     }
 }
 
+// MARK: - 상태
 extension CheckInStatus {
     var displayName: String {
         switch self {
@@ -133,6 +134,7 @@ extension CheckInStatus {
     }
 }
 
+// MARK: - Preview
 #Preview {
     let checkInListViewModel = CheckInListViewModel()
     checkInListViewModel.items = [

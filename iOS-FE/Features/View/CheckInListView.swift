@@ -8,13 +8,13 @@ struct CheckInListView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // MARK: 전체 배경
                 Color(AppColor.bgGray)
                     .ignoresSafeArea()
-                
                 VStack(spacing: 0) {
                     HStack {
                         Spacer()
+                        
+                        // MARK: - 총 개수 표시
                         Text("총 \(checkInListViewModel.items.count)건")
                             .font(.subheadline)
                             .foregroundColor(AppColor.mainTextGray)
@@ -22,6 +22,7 @@ struct CheckInListView: View {
                     }
                     .padding(.horizontal)
                     
+                    // MARK: - 리스트 영역
                     if checkInListViewModel.isLoading {
                         VStack {
                             Spacer()
@@ -33,7 +34,6 @@ struct CheckInListView: View {
                     } else if checkInListViewModel.items.isEmpty {
                         Text("접수 이력이 없습니다.")
                     }else {
-                        // MARK: 스크롤 콘텐츠
                         ScrollView {
                             VStack(spacing: 16) {
                                 ForEach(checkInListViewModel.items) { item in
@@ -46,7 +46,6 @@ struct CheckInListView: View {
                             }
                             .padding()
                         }
-                        
                     }
                 }
             }
@@ -61,6 +60,7 @@ struct CheckInListView: View {
     }
 }
 
+// MARK: - Preview
 #Preview {
     let viewModel = CheckInListViewModel()
     CheckInListView(checkInListViewModel: viewModel)
