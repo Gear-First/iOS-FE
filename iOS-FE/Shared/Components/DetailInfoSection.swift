@@ -73,6 +73,7 @@ struct DetailInfoSection: View {
     }
 }
 
+// MARK: - Preview
 #Preview {
     VStack(spacing: 20) {
         DetailInfoSection(
