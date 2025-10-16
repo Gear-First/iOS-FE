@@ -5,15 +5,10 @@ struct MyCheckInListView: View {
     @State private var searchText: String = ""
     @State private var selectedFilter: CheckInStatus? = nil
     
-    // 실제 로그인된 매니저 이름
-    private let currentManagerName = "송지은"
     
     // MARK: 담당자 필터링 + 상태 필터링 + 검색 적용된 결과
     private var filteredItems: [CheckInItem] {
         checkInListViewModel.items.filter { item in
-            // 담당자가 현재 로그인 사용자
-            guard item.manager == currentManagerName else { return false }
-            
             // MARK: 상태 필터 (nil = 전체)
             if let status = selectedFilter, item.status != status {
                 return false
@@ -63,9 +58,6 @@ struct MyCheckInListView: View {
                 }
                 .frame(height: 40)
                 .padding(.horizontal)
-                
-                
-                
                 
                 // MARK: 상단 검색창
                 HStack {
@@ -122,6 +114,10 @@ struct MyCheckInListView: View {
             .navigationTitle("내 접수 내역")
             .navigationBarTitleDisplayMode(.inline)
             .background(Color(AppColor.bgGray))
+            .task {
+                await checkInListViewModel.fetchMyReceipts()
+            }
+
         }
     }
 }

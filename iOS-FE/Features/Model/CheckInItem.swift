@@ -1,5 +1,5 @@
 import Foundation
-import SwiftUICore
+import SwiftUI
 
 struct CheckInItem: Identifiable {
     let id: String              // 접수번호
@@ -14,16 +14,7 @@ struct CheckInItem: Identifiable {
     var leadTimeDays: Int?          // 소요일(요청일~완료일 일수)
     
     var completionInfos: [CheckInDetailViewModel.CompletionInfo]? = nil
-    
-    // 완료 후 채워지는 필드들
-    var completionDate: String?     // 완료일자 (yyyy-MM-dd)
-    var repairDescription: String?  // 수리내용
-    var cause: String?              // 원인
-    var partName: String?
-    var partQuantity: Int?
-    var partPrice: Double?
-    var totalPrice: Double?
-    
+
     // 날짜 차이 계산 헬퍼 (yyyy-MM-dd)
     static func daysBetween(_ from: String, _ to: String) -> Int? {
         let fmt = DateFormatter()
@@ -40,4 +31,91 @@ enum CheckInStatus: String, Codable, CaseIterable {
     case checkIn = "접수"
     case inProgress = "수리중"
     case completed = "완료"
+}
+
+
+// MARK: - 서버 응답 구조
+struct ReceiptResponse: Codable {
+    let status: Int
+    let success: Bool
+    let message: String
+    let data: [ReceiptData]
+}
+
+struct ReceiptData: Codable {
+    let receiptHistoryId: String
+    let receipterName: String
+    let receipterCarNum: String
+    let receipterCarType: String
+    let receipterPhone: String
+    let receipterRequest: String
+    let engineer: String?
+    let status: String
+    let repairHistories: [RepairHistory]?
+}
+
+struct RepairHistory: Codable {
+    let repairDetail: String?
+    let repairCause: String?
+    let usedParts: [UsedPart]?
+}
+
+struct UsedPart: Codable {
+    let partName: String?
+    let quantity: Int?
+    let price: Int?
+}
+
+extension ReceiptData {
+    func toCheckInItem() -> CheckInItem {
+        // 오늘 날짜 기본값
+        let today = {
+            let fmt = DateFormatter()
+            fmt.dateFormat = "yyyy-MM-dd"
+            return fmt.string(from: Date())
+        }()
+        
+        // 수리 정보 (없으면 빈 배열)
+        let completionInfos: [CheckInDetailViewModel.CompletionInfo] = (repairHistories ?? []).flatMap { history in
+            (history.usedParts ?? []).map { part in
+                CheckInDetailViewModel.CompletionInfo(
+                    completionDate: today, // 오늘 날짜
+                    repairDescription: history.repairDetail ?? "수리 내역 없음",
+                    cause: history.repairCause ?? "원인 미정",
+                    partName: part.partName ?? "부품 미정",
+                    partQuantity: part.quantity ?? 0,
+                    partPrice: Double(part.price ?? 0),
+                    totalPrice: Double(part.price ?? 0) * Double(part.quantity ?? 0)
+                )
+            }
+        }
+
+        // 상태 문자열 -> enum 매핑
+        let convertedStatus: CheckInStatus = {
+            switch status.lowercased() {
+            case "receipt", "접수":
+                return .checkIn
+            case "inprogress", "수리중":
+                return .inProgress
+            case "completed", "완료":
+                return .completed
+            default:
+                return .checkIn
+            }
+        }()
+        
+        return CheckInItem(
+            id: receiptHistoryId,
+            carNumber: receipterCarNum,
+            ownerName: receipterName,
+            carModel: receipterCarType,
+            requestContent: receipterRequest,
+            date: today,
+            phoneNumber: receipterPhone,
+            manager: engineer ?? "미지정",
+            status: convertedStatus,
+            leadTimeDays: nil,
+            completionInfos: completionInfos
+        )
+    }
 }

@@ -1,5 +1,7 @@
 import SwiftUI
 
+
+
 struct CheckInListView: View {
     @ObservedObject var checkInListViewModel: CheckInListViewModel
     
@@ -12,14 +14,13 @@ struct CheckInListView: View {
                 
                 VStack(spacing: 0) {
                     HStack {
-                    Spacer()
+                        Spacer()
                         Text("총 \(checkInListViewModel.items.count)건")
                             .font(.subheadline)
                             .foregroundColor(AppColor.mainTextGray)
                             .padding(.trailing, 10)
                     }
                     .padding(.horizontal)
-                    
                     
                     if checkInListViewModel.items.isEmpty {
                         VStack(spacing: 8) {
@@ -32,34 +33,38 @@ struct CheckInListView: View {
                         }
                         .frame(maxWidth: .infinity, minHeight: 600)
                     } else {
-                        // MARK: 스크롤 콘텐츠
-                        ScrollView {
-                            VStack(spacing: 16) {
-                                ForEach(checkInListViewModel.items) { item in
-                                    NavigationLink {
-                                        CheckInDetailView(
-                                            checkInDetailViewModel: CheckInDetailViewModel(item: item)
-                                        )
-                                    } label: {
-                                        CheckInCard(item: item)
-                                            .padding(.top, 4)
-                                            .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 2)
+                        if checkInListViewModel.items.isEmpty {
+                            ProgressView("불러오는 중...")
+                        } else {
+                            // MARK: 스크롤 콘텐츠
+                            ScrollView {
+                                VStack(spacing: 16) {
+                                    ForEach(checkInListViewModel.items) { item in
+                                        NavigationLink {
+                                            CheckInDetailView(checkInDetailViewModel: CheckInDetailViewModel(item: item))
+                                        } label: {
+                                            CheckInCard(item: item)
+                                        }
                                     }
-                                    .buttonStyle(.plain)
                                 }
+                                .padding()
                             }
-                            .padding()
                         }
                     }
                 }
             }
             .navigationTitle("접수 목록")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                Task {
+                    await checkInListViewModel.fetchReceipts()
+                }
+            }
         }
     }
 }
 
 #Preview {
     let viewModel = CheckInListViewModel()
-    return CheckInListView(checkInListViewModel: viewModel)
+    CheckInListView(checkInListViewModel: viewModel)
 }

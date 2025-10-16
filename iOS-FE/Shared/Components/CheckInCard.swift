@@ -56,18 +56,18 @@ struct CheckInCard: View {
 }
 
 #Preview {
-    let mockItem = CheckInItem(
-        id: "ABC-001",
-        carNumber: "11가 1234",
-        ownerName: "박우진",
-        carModel: "그랜저",
-        requestContent: "엔진오일 교체 요청",
-        date: "2025-11-11",
-        phoneNumber: "010-1234-5678",
-        manager: "정상기",
-        status: .inProgress
-    )
-    
-    return CheckInCard(item: mockItem)
-        .padding()
+//    let mockItem = CheckInItem(
+//        id: "ABC-001",
+//        carNumber: "11가 1234",
+//        ownerName: "박우진",
+//        carModel: "그랜저",
+//        requestContent: "엔진오일 교체 요청",
+//        date: "2025-11-11",
+//        phoneNumber: "010-1234-5678",
+//        manager: "정상기",
+//        status: .inProgress
+//    )
+//    
+//    return CheckInCard(item: mockItem)
+//        .padding()
 }
