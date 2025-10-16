@@ -75,3 +75,40 @@ enum OrderStatus: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+
+extension OrderItem {
+    /// CheckInItem 객체로부터 OrderItem을 생성하는 변환 이니셜라이저
+    /// 부품 이름, 코드, 수량 등 필수 정보가 없으면 생성에 실패하고 nil을 반환한다.
+    init?(from checkInItem: CheckInItem) {
+        // 1. 주문 생성에 필요한 필수 정보가 있는지 확인한다.
+        guard
+            let partCode = checkInItem.partCode, !partCode.isEmpty,
+            let partName = checkInItem.partName, !partName.isEmpty,
+            let quantity = checkInItem.partQuantity, quantity > 0
+        else {
+            // 필수 정보가 없으면 변환 실패
+            return nil
+        }
+        
+        // 2. OrderItem의 각 프로퍼티에 값을 매핑한다.
+        self.id = "ORD-\(UUID().uuidString.prefix(8))" // 주문 요청이므로 새로운 주문 ID를 생성
+        
+        self._id = id
+        self.inventoryCode = partCode
+        self.inventoryName = partName
+        self.quantity = quantity
+        
+        // 3. 날짜는 '주문 요청일'이므로 현재 시각을 사용한다.
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        self.requestDate = formatter.string(from: Date())
+        
+        // 4. 나머지 상태 관련 프로퍼티는 초기값으로 설정한다.
+        self.approvalDate = nil
+        self.deliveryStartDate = nil
+        self.deliveredDate = nil
+        self.orderStatus = .승인대기 // 새로 요청된 주문의 초기 상태
+    }
+}
+
+

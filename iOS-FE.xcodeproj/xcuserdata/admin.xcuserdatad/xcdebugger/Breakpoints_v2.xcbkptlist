@@ -20,5 +20,121 @@
             landmarkType = "0">
          </BreakpointContent>
       </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "570951EF-FFC1-462A-B5D8-AFF2A00A139A"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "iOS-FE/Features/ViewModel/OrderRequestViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "10"
+            endingLineNumber = "10"
+            landmarkName = "OrderRequestViewModel"
+            landmarkType = "3">
+            <Locations>
+               <Location
+                  uuid = "570951EF-FFC1-462A-B5D8-AFF2A00A139A - eadf6735fa3b973c"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "property wrapper backing initializer of iOS_FE.OrderRequestViewModel.orderName : Swift.String"
+                  moduleName = "iOS-FE.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/admin/Documents/Gear-First/iOS-FE/iOS-FE/Features/ViewModel/OrderRequestViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "570951EF-FFC1-462A-B5D8-AFF2A00A139A - 218e929778edafea"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "iOS_FE.OrderRequestViewModel.orderName.getter : Swift.String"
+                  moduleName = "iOS-FE.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/admin/Documents/Gear-First/iOS-FE/iOS-FE/Features/ViewModel/OrderRequestViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "570951EF-FFC1-462A-B5D8-AFF2A00A139A - f8a004812196bfe6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "iOS_FE.OrderRequestViewModel.orderName.setter : Swift.String"
+                  moduleName = "iOS-FE.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/admin/Documents/Gear-First/iOS-FE/iOS-FE/Features/ViewModel/OrderRequestViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "570951EF-FFC1-462A-B5D8-AFF2A00A139A - 492a7feab2fe9241"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "iOS_FE.OrderRequestViewModel.orderName.modify : Swift.String"
+                  moduleName = "iOS-FE.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/admin/Documents/Gear-First/iOS-FE/iOS-FE/Features/ViewModel/OrderRequestViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "10"
+                  endingLineNumber = "10">
+               </Location>
+               <Location
+                  uuid = "570951EF-FFC1-462A-B5D8-AFF2A00A139A - e0b3f2c15e5a87c9"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "iOS_FE.OrderRequestViewModel.$orderName.getter : Combine.Published&lt;Swift.String&gt;.Publisher"
+                  moduleName = "iOS-FE.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/admin/Documents/Gear-First/iOS-FE/iOS-FE/Features/ViewModel/OrderRequestViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "570951EF-FFC1-462A-B5D8-AFF2A00A139A - f60c790ad60e9708"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "iOS_FE.OrderRequestViewModel.$orderName.setter : Combine.Published&lt;Swift.String&gt;.Publisher"
+                  moduleName = "iOS-FE.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/admin/Documents/Gear-First/iOS-FE/%3Cstdin%3E"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "570951EF-FFC1-462A-B5D8-AFF2A00A139A - 636e7fc7867e6407"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "iOS_FE.OrderRequestViewModel.$orderName.modify : Combine.Published&lt;Swift.String&gt;.Publisher"
+                  moduleName = "iOS-FE.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/admin/Documents/Gear-First/iOS-FE/%3Cstdin%3E"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
    </Breakpoints>
 </Bucket>

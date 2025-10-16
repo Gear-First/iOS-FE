@@ -12,7 +12,7 @@ struct BottomBar: View {
                 switch selectedIndex {
                 case 0: CheckInListView(checkInListViewModel: checkInListViewModel)
                 case 1: MyCheckInListView(checkInListViewModel: checkInListViewModel)
-                case 2: OrderRequestView(historyViewModel: historyViewModel)
+                case 2: OrderRequestView( historyViewModel: historyViewModel)
                 case 3: OrderHistoryView(historyViewModel: historyViewModel)
                 case 4: MyPageView()
                 default: MyPageView()

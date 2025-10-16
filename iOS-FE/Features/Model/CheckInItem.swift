@@ -3,9 +3,9 @@ import SwiftUICore
 
 struct CheckInItem: Identifiable {
     let id: String              // 접수번호
-    let carNumber: String       // 차량번호
+    var carNumber: String       // 차량번호
     let ownerName: String       // 차주명
-    let carModel: String        // 차종
+    var carModel: String        // 차종
     let requestContent: String  // 수리 요청사항
     let date: String            // 접수일자 (yyyy-MM-dd)
     let phoneNumber: String     // 차주번호
@@ -20,6 +20,7 @@ struct CheckInItem: Identifiable {
     var repairDescription: String?  // 수리내용
     var cause: String?              // 원인
     var partName: String?
+    var partCode: String?
     var partQuantity: Int?
     var partPrice: Double?
     var totalPrice: Double?
@@ -33,6 +34,7 @@ struct CheckInItem: Identifiable {
         let days = Calendar.current.dateComponents([.day], from: d1, to: d2).day
         return days
     }
+    
 
 }
 

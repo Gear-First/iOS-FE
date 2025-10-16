@@ -35,6 +35,9 @@ final class CheckInDetailViewModel: ObservableObject {
         let partPrice: Double
         let totalPrice: Double
     }
+    
+    
+    
 }
 
 //extension CheckInDetailViewModel {
@@ -46,7 +49,7 @@ final class CheckInDetailViewModel: ObservableObject {
 //    }
 //}
 
-extension CheckInDetailViewModel {
+extension CheckInDetailViewModel{
     func applyMultipleCompletionInfo(_ infos: [CompletionInfo]) {
         item.status = .completed
         item.completionInfos = infos
@@ -62,5 +65,17 @@ extension CheckInDetailViewModel {
             } else {
                 item.leadTimeDays = nil
             }
+    }
+}
+
+extension CheckInDetailViewModel: PartSelectable {
+    var name: String {
+        get { item.partName ?? ""}
+        set { item.partName = newValue }
+    }
+
+    var code: String {
+        get { item.partCode ?? "" }
+        set { item.partCode = newValue }
     }
 }

@@ -6,8 +6,12 @@ protocol PartSelectable: ObservableObject {
     var code: String { get set }
 }
 
+// 제네릭 플레이스홀더의 이름을 관례에 따라 대문자 한 글자(T)나 명확한 ViewModel 등으로 변경하는 것이 좋으나,
+// 여기서는 기존 코드와의 일관성을 위해 ViewModel을 그대로 사용한다.
 struct PartSearchSheetView<ViewModel: PartSelectable>: View {
+    // MARK: - ⚙️ [오류 1 수정] 프로퍼티 타입을 제네릭 플레이스홀더로 변경
     @ObservedObject var viewModel: ViewModel
+    
     @Environment(\.dismiss) var dismiss
     @State private var searchText = ""
 
@@ -48,6 +52,7 @@ struct PartSearchSheetView<ViewModel: PartSelectable>: View {
     
     private func partRow(_ item: (name: String, code: String)) -> some View {
         Button(action: {
+            // MARK: - ⚙️ [오류 2 수정] 프로토콜이 보장하는 프로퍼티에 직접 접근
             viewModel.name = item.name
             viewModel.code = item.code
             dismiss()
@@ -56,22 +61,14 @@ struct PartSearchSheetView<ViewModel: PartSelectable>: View {
                 HStack {
                     Text(item.name)
                         .font(.headline)
-                        .foregroundColor(AppColor.mainBlack)
+                        .foregroundColor(AppColor.mainBlack) // AppColor가 정의되어 있다고 가정
                 }
                 Text(item.code)
                     .font(.subheadline)
-                    .foregroundColor(AppColor.mainTextGray)
+                    .foregroundColor(AppColor.mainTextGray) // AppColor가 정의되어 있다고 가정
                 Divider()
                     .padding(.vertical, 6)
             }
         }
     }
-}
-
-
-
-
-#Preview {
-    let mockViewModel = OrderRequestViewModel()
-    return PartSearchSheetView(viewModel: mockViewModel)
 }

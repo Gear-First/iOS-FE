@@ -101,9 +101,9 @@ struct RepairItemCard: View {
                 .fill(Color.white)
                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
         )
-        .sheet(isPresented: $showPartSearch) {
-            PartSearchSheetView(viewModel: form)
-        }
+//        .sheet(isPresented: $showPartSearch) {
+//            PartSearchSheetView(viewModel: form)
+//        }
         .sheet(isPresented: $showQuantityPicker) {
             VStack {
                 Text("수량 선택")
