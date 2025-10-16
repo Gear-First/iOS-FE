@@ -54,62 +54,75 @@ struct CheckInDetailView: View {
                         if checkInDetailViewModel.item.status == .completed {
                             if let infos = checkInDetailViewModel.item.completionInfos {
                                 VStack(alignment: .leading, spacing: 14) {
-                                    // MARK: - 제목
-                                    HStack {
-                                        Text("수리 완료 정보")
-                                            .font(.title3)
-                                            .fontWeight(.semibold)
-                                        Spacer()
-                                        Text("총 \(infos.count)건")
-                                            .font(.callout)
-                                            .foregroundColor(.gray)
-                                    }
-                                    
-                                    Divider().padding(.bottom, 6)
-                                    
-                                    // MARK: 리스트
-                                    VStack(alignment: .leading, spacing: 18) {
-                                        ForEach(infos.indices, id: \.self) { index in
-                                            let info = infos[index]
-                                            
-                                            VStack(alignment: .leading, spacing: 8) {
+                                    // MARK: 제목
+                                    let grouped = Dictionary(grouping: infos, by: { $0.repairDescription })
                                                 HStack {
-                                                    Text("\(index + 1). \(info.repairDescription)")
-                                                        .font(.system(size: 18))
-                                                        .fontWeight(.bold)
+                                                    Text("수리 완료 정보")
+                                                        .font(.title3)
+                                                        .fontWeight(.semibold)
                                                     Spacer()
-                                                    Text(formattedPrice(info.totalPrice))
+                                                    Text("총 \(grouped.keys.count)건")
+                                                        .font(.callout)
+                                                        .foregroundColor(.gray)
+                                                }
+                                                
+                                                Divider().padding(.bottom, 6)
+                                                
+                                    ForEach(Array(grouped.keys.enumerated()), id: \.1) { index, key in
+                                        if let group = grouped[key], let first = group.first {
+                                            VStack(alignment: .leading, spacing: 10) {
+                                                // MARK: 수리내용 + 원인
+                                                VStack(alignment: .leading, spacing: 10) {
+                                                    Text("\(index + 1). \(first.repairDescription)")
+                                                        .font(.title3)
+                                                    Text("원인: \(first.cause)")
                                                         .font(.body)
+                                                }
+                                                // MARK: 부품 리스트
+                                                VStack(alignment: .leading, spacing: 6) {
+                                                    ForEach(group, id: \.partName) { part in
+                                                        VStack(alignment: .leading, spacing: 2) {
+                                                            HStack {
+                                                                Text(part.partName)
+                                                                    .font(.body)
+                                                                Spacer()
+                                                                Text(formattedPrice(part.partPrice))
+                                                                    .font(.body)
+                                                                    .fontWeight(.medium)
+                                                                    .foregroundColor(AppColor.mainBlue)
+                                                            }
+                                                            Text("수량: \(part.partQuantity)EA")
+                                                                .font(.body)
+                                                                .foregroundColor(.gray)
+                                                        }
+                                                        Divider().padding(.vertical, 4).opacity(0.15)
+                                                    }
+                                                }
+                                                .padding(.horizontal, 2)
+
+                                                // MARK: 항목 합계
+                                                HStack {
+                                                    Spacer()
+                                                    Text("항목 합계: \(formattedPrice(group.reduce(0) { $0 + $1.totalPrice }))")
+                                                        .font(.callout)
                                                         .fontWeight(.semibold)
                                                         .foregroundColor(.green)
                                                 }
-                                                
-                                                VStack(alignment: .leading, spacing: 4) {
-                                                    Text("원인: \(info.cause)")
-                                                        .font(.body)
-                                                        .foregroundColor(.black)
-                                                    Text("부품: \(info.partName) (\(info.partQuantity)개)")
-                                                        .font(.callout)
-                                                        .foregroundColor(.primary)
-                                                }
                                             }
-                                            .padding(.vertical, 6)
-                                            
-                                            if index < infos.count - 1 {
-                                                Divider().opacity(0.25)
-                                            }
+                                            Divider().padding(.vertical, 4)
                                         }
                                     }
-                                    
-                                    // MARK: - 총 합계
-                                    HStack {
-                                        Spacer()
-                                        Text("총 합계: \(formattedPrice(totalPrice(of: infos)))")
-                                            .font(.title3)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(AppColor.mainBlue)
-                                    }
-                                    .padding(.top, 10)
+
+                                                
+                                                // MARK: 총 합계
+                                                HStack {
+                                                    Spacer()
+                                                    Text("총 합계: \(formattedPrice(totalPrice(of: infos)))")
+                                                        .font(.title3)
+                                                        .fontWeight(.bold)
+                                                        .foregroundColor(AppColor.mainBlue)
+                                                }
+                                                .padding(.top, 12)
                                 }
                                 .padding(20)
                                 .background(
@@ -262,19 +275,19 @@ struct CheckInDetailView: View {
         CheckInDetailView(
             checkInDetailViewModel: CheckInDetailViewModel(
                 item: CheckInItem(
-                    id: "CHK-1012",
-                    carNumber: "33러 5678",
-                    ownerName: "최유진",
-                    carModel: "투싼",
-                    requestContent: "냉각수 점검 및 보충",
+                    id: "CHK-2025",
+                    carNumber: "12가 3456",
+                    ownerName: "김민수",
+                    carModel: "그랜저",
+                    requestContent: "정기 점검 및 교체",
                     date: "2025-10-10",
-                    phoneNumber: "010-2222-3333",
-                    manager: "김성민",
+                    phoneNumber: "010-1111-2222",
+                    manager: "정우성",
                     status: .completed,
-                    leadTimeDays: 4,
+                    leadTimeDays: 3,
                     completionInfos: [
                         CheckInDetailViewModel.CompletionInfo(
-                            completionDate: "2025-10-14",
+                            completionDate: "2025-10-13",
                             repairDescription: "엔진오일 교체",
                             cause: "주행거리 초과",
                             partName: "엔진오일",
@@ -283,7 +296,27 @@ struct CheckInDetailView: View {
                             totalPrice: 90000
                         ),
                         CheckInDetailViewModel.CompletionInfo(
-                            completionDate: "2025-10-14",
+                            completionDate: "2025-10-13",
+                            repairDescription: "엔진오일 교체",
+                            cause: "주행거리 초과",
+                            partName: "오일필터",
+                            partQuantity: 1,
+                            partPrice: 12000,
+                            totalPrice: 12000
+                        ),
+                        CheckInDetailViewModel.CompletionInfo(
+                            completionDate: "2025-10-13",
+                            repairDescription: "엔진오일 교체",
+                            cause: "주행거리 초과",
+                            partName: "드레인 플러그 패킹",
+                            partQuantity: 1,
+                            partPrice: 3000,
+                            totalPrice: 3000
+                        ),
+
+                        // ✅ 다른 항목 예시
+                        CheckInDetailViewModel.CompletionInfo(
+                            completionDate: "2025-10-13",
                             repairDescription: "브레이크 패드 교체",
                             cause: "마모 심함",
                             partName: "브레이크 패드",

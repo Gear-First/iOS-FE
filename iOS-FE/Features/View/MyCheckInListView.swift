@@ -83,15 +83,16 @@ struct MyCheckInListView: View {
                 .padding(.horizontal, 20)
                 
                 // 리스트 영역
-                if filteredItems.isEmpty {
+                if checkInListViewModel.isLoading {
                     VStack {
                         Spacer()
-                        Text("담당한 접수 이력이 없습니다.")
-                            .foregroundColor(.gray)
-                            .font(.body)
+                        ProgressView("불러오는 중...")
+                            .progressViewStyle(CircularProgressViewStyle(tint: AppColor.mainBlue))
+                            .font(.headline)
                         Spacer()
                     }
-                    .frame(maxWidth: .infinity, minHeight: 500)
+                } else if filteredItems.isEmpty {
+                    Text("담당한 접수 이력이 없습니다.")
                 } else {
                     ScrollView {
                         VStack(spacing: 16) {
@@ -101,7 +102,7 @@ struct MyCheckInListView: View {
                                         checkInDetailViewModel: CheckInDetailViewModel(item: item)
                                     )
                                 } label: {
-                                    CheckInCard(item: item)
+                                    CheckInCard(item: item, showStatus: true)
                                 }
                                 .buttonStyle(.plain)
                             }

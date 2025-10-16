@@ -22,34 +22,31 @@ struct CheckInListView: View {
                     }
                     .padding(.horizontal)
                     
-                    if checkInListViewModel.items.isEmpty {
-                        VStack(spacing: 8) {
+                    if checkInListViewModel.isLoading {
+                        VStack {
                             Spacer()
-                            Text("접수 이력이 없습니다.")
-                                .foregroundColor(.gray)
-                                .font(.body)
-                                .padding()
+                            ProgressView("불러오는 중...")
+                                .progressViewStyle(CircularProgressViewStyle(tint: AppColor.mainBlue))
+                                .font(.headline)
                             Spacer()
                         }
-                        .frame(maxWidth: .infinity, minHeight: 600)
-                    } else {
-                        if checkInListViewModel.items.isEmpty {
-                            ProgressView("불러오는 중...")
-                        } else {
-                            // MARK: 스크롤 콘텐츠
-                            ScrollView {
-                                VStack(spacing: 16) {
-                                    ForEach(checkInListViewModel.items) { item in
-                                        NavigationLink {
-                                            CheckInDetailView(checkInDetailViewModel: CheckInDetailViewModel(item: item))
-                                        } label: {
-                                            CheckInCard(item: item)
-                                        }
+                    } else if checkInListViewModel.items.isEmpty {
+                        Text("접수 이력이 없습니다.")
+                    }else {
+                        // MARK: 스크롤 콘텐츠
+                        ScrollView {
+                            VStack(spacing: 16) {
+                                ForEach(checkInListViewModel.items) { item in
+                                    NavigationLink {
+                                        CheckInDetailView(checkInDetailViewModel: CheckInDetailViewModel(item: item))
+                                    } label: {
+                                        CheckInCard(item: item)
                                     }
                                 }
-                                .padding()
                             }
+                            .padding()
                         }
+                        
                     }
                 }
             }
