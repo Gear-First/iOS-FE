@@ -50,7 +50,6 @@ struct CheckInDetailView: View {
                             }()
                         )
                         
-                        
                         // MARK: 완료 정보
                         if checkInDetailViewModel.item.status == .completed {
                             if let infos = checkInDetailViewModel.item.completionInfos {
@@ -139,7 +138,10 @@ struct CheckInDetailView: View {
                     .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: -1)
                 } else if checkInDetailViewModel.item.status == .inProgress {
                     bottomBarNavigationLink(title: "수리 완료", color: .green) {
-                        CheckInCompletionView(detailViewModel: checkInDetailViewModel)
+                        CheckInCompletionView(
+                                detailViewModel: checkInDetailViewModel,
+                                formVM: checkInDetailViewModel.completionFormVM
+                            )
                     }
                 }
             }
@@ -153,7 +155,8 @@ struct CheckInDetailView: View {
                     title: Text("수리를 시작하시겠습니까?"),
                     message: Text("담당자 정보가 등록됩니다."),
                     primaryButton: .destructive(Text("확인")) {
-                        checkInDetailViewModel.updateStatus(to: .inProgress, manager: "송지은")
+                        //  API 호출
+                        checkInDetailViewModel.startRepair()
                     },
                     secondaryButton: .cancel(Text("취소"))
                 )

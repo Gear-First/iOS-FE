@@ -3,6 +3,15 @@ import Foundation
 final class CheckInCompletionViewModel: ObservableObject {
     @Published var items: [RepairItemForm] = [RepairItemForm()]  // 시작 시 하나
     
+    init() {
+        if items.isEmpty {
+            let first = RepairItemForm()
+            first.parentViewModel = self
+            items.append(first)
+            print("[DEBUG] 초기 RepairItemForm 생성됨 \(first.id)")
+        }
+    }
+    
     // 오늘 날짜 고정
     var todayString: String {
         let f = DateFormatter()
@@ -10,17 +19,13 @@ final class CheckInCompletionViewModel: ObservableObject {
         f.dateFormat = "yyyy-MM-dd"
         return f.string(from: Date())
     }
-    
-    var totalSum: Double {
-        items.reduce(0) { $0 + $1.totalPrice }
-    }
-    
-    init() {
-        let first = RepairItemForm()
-        first.parentViewModel = self
-        items = [first]
-    }
-    
+//    
+//    init() {
+//        let first = RepairItemForm()
+//        first.parentViewModel = self
+//        items = [first]
+//    }
+//    
     func addItem() {
         let new = RepairItemForm()
         new.parentViewModel = self
@@ -29,9 +34,13 @@ final class CheckInCompletionViewModel: ObservableObject {
     
     func canAddNewItem() -> Bool {
         for form in items {
+            // 수리 내용 & 원인은 필수
             if form.description.trimmingCharacters(in: .whitespaces).isEmpty ||
-               form.cause.trimmingCharacters(in: .whitespaces).isEmpty ||
-               form.partName.trimmingCharacters(in: .whitespaces).isEmpty {
+                form.cause.trimmingCharacters(in: .whitespaces).isEmpty {
+                return false
+            }
+            // 부품 리스트 중 하나라도 이름이 비어있으면 안 됨
+            if form.parts.contains(where: { $0.partName.trimmingCharacters(in: .whitespaces).isEmpty }) {
                 return false
             }
         }
@@ -41,36 +50,65 @@ final class CheckInCompletionViewModel: ObservableObject {
     func removeItem(_ id: UUID) {
         items.removeAll { $0.id == id }
     }
-    
-    func buildCompletionInfo() -> [CheckInDetailViewModel.CompletionInfo]? {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "ko_KR")
-        f.dateFormat = "yyyy-MM-dd"
-        let today = f.string(from: Date())
-        
-        let mapped: [CheckInDetailViewModel.CompletionInfo] = items.compactMap { form in
-            guard !form.description.isEmpty,
-                  !form.cause.isEmpty,
-                  !form.partName.isEmpty
-            else { return nil }
-            
-            return CheckInDetailViewModel.CompletionInfo(
-                completionDate: today,
-                repairDescription: form.description,
-                cause: form.cause,
-                partName: form.partName,
-                partQuantity: form.quantity,
-                partPrice: form.unitPrice,
-                totalPrice: form.totalPrice
+
+    // 여러 부품을 고려한 구조로 변경
+    func buildRepairRequest(receiptId: String) -> RepairRequest {
+        let details = items.map { item in
+            RepairDetailRequest(
+                repairDetail: item.description,
+                repairCause: item.cause,
+                usedParts: item.parts.map { part in
+                    UsedPartRequest(
+                        partId: part.partId ?? Int.random(in: 100...999), // 더미 id 보정
+                        partName: part.partName,
+                        quantity: part.quantity
+                    )
+                }
             )
         }
         
-        return mapped.isEmpty ? nil : mapped
+        return RepairRequest(
+            receiptHistoryId: receiptId,
+            repairDetailRequests: details
+        )
     }
-    
+
     // 10,000 ~ 1,000,000원 사이 랜덤 가격을 자동 지정
-    func autofillRandomPrice(for form: RepairItemForm) {
+    func autofillRandomPrice(for part: RepairPartForm) {
         let random = Double(Int.random(in: 10...1000) * 1000)
-        form.unitPrice = random
+        part.unitPrice = random
     }
+}
+
+extension CheckInCompletionViewModel {
+    func submitRepairDetails(receiptId: String, formVM: CheckInCompletionViewModel) async {
+        
+        guard let url = URL(string: "http://34.160.169.52/receipt/api/v1/repairDetail") else { return }
+        
+        let requestBody = formVM.buildRepairRequest(receiptId: receiptId)
+        
+        do {
+            let encoded = try JSONEncoder().encode(requestBody)
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = encoded
+            print(String(data: encoded, encoding: .utf8)!)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                if (200..<300).contains(httpResponse.statusCode) {
+                    print("수리 상세 등록 성공")
+                } else {
+                    print("서버 오류 코드: \(httpResponse.statusCode)")
+                    if let body = String(data: data, encoding: .utf8) {
+                        print("Response Body:", body)
+                    }
+                }
+            }
+        } catch {
+            print("요청 실패:", error)
+        }
+    }
+
 }
