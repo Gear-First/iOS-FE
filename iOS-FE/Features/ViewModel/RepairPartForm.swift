@@ -6,10 +6,10 @@ final class RepairPartForm: ObservableObject, Identifiable, PartSelectable {
     // 서버로 보낼 필드
     @Published var partId: Int? = nil
     @Published var partName: String = ""
-    @Published var quantity: Int = 0  // 서버로 보냄
+    @Published var quantity: Int = 0
     
     // UI 전용 필드
-    @Published var unitPrice: Double = 0.0  // 서버 전송 안함
+    @Published var unitPrice: Double = 0.0 
     
     // 총액 계산 (UI 표시용)
     var totalPrice: Double { Double(quantity) * unitPrice }

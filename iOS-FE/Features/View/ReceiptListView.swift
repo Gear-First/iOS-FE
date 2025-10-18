@@ -2,8 +2,8 @@ import SwiftUI
 
 
 
-struct CheckInListView: View {
-    @ObservedObject var checkInListViewModel: CheckInListViewModel
+struct ReceiptListView: View {
+    @ObservedObject var receiptListViewModel: ReceiptListViewModel
     
     var body: some View {
         NavigationView {
@@ -15,7 +15,7 @@ struct CheckInListView: View {
                         Spacer()
                         
                         // MARK: - 총 개수 표시
-                        Text("총 \(checkInListViewModel.items.count)건")
+                        Text("총 \(receiptListViewModel.items.count)건")
                             .font(.subheadline)
                             .foregroundColor(AppColor.mainTextGray)
                             .padding(.trailing, 10)
@@ -23,7 +23,7 @@ struct CheckInListView: View {
                     .padding(.horizontal)
                     
                     // MARK: - 리스트 영역
-                    if checkInListViewModel.isLoading {
+                    if receiptListViewModel.isLoading {
                         VStack {
                             Spacer()
                             ProgressView("불러오는 중...")
@@ -31,16 +31,23 @@ struct CheckInListView: View {
                                 .font(.headline)
                             Spacer()
                         }
-                    } else if checkInListViewModel.items.isEmpty {
-                        Text("접수 이력이 없습니다.")
+                    } else if receiptListViewModel.items.isEmpty {
+                        VStack {
+                                Spacer()
+                                Text("접수 이력이 없습니다.")
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
+                                Spacer()
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }else {
                         ScrollView {
                             VStack(spacing: 16) {
-                                ForEach(checkInListViewModel.items) { item in
+                                ForEach(receiptListViewModel.items) { item in
                                     NavigationLink {
-                                        CheckInDetailView(checkInDetailViewModel: CheckInDetailViewModel(item: item))
+                                        ReceiptDetailView(receiptDetailViewModel: ReceiptDetailViewModel(item: item))
                                     } label: {
-                                        CheckInCard(item: item)
+                                        ReceiptCard(item: item)
                                     }
                                 }
                             }
@@ -53,7 +60,7 @@ struct CheckInListView: View {
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 Task {
-                    await checkInListViewModel.fetchReceipts()
+                    await receiptListViewModel.fetchReceipts()
                 }
             }
         }
@@ -62,6 +69,6 @@ struct CheckInListView: View {
 
 // MARK: - Preview
 #Preview {
-    let viewModel = CheckInListViewModel()
-    CheckInListView(checkInListViewModel: viewModel)
+    let viewModel = ReceiptListViewModel()
+    ReceiptListView(receiptListViewModel: viewModel)
 }
