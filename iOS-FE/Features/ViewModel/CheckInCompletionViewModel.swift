@@ -72,6 +72,10 @@ final class CheckInCompletionViewModel: ObservableObject {
         let random = Double(Int.random(in: 10...1000) * 1000)
         part.unitPrice = random
     }
+    
+    func resetForm() {
+        items = [RepairItemForm()] // 항목 하나만 남기고 리셋
+    }
 }
 
 extension CheckInCompletionViewModel {
