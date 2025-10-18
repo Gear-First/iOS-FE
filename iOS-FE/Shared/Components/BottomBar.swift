@@ -3,17 +3,17 @@ import SwiftUI
 struct BottomBar: View {
     @State private var selectedIndex: Int = 0
     @StateObject private var historyViewModel = OrderHistoryViewModel()
-    @StateObject private var checkInListViewModel = CheckInListViewModel()
-    @StateObject private var checkInCompletionViewModel = CheckInCompletionViewModel()
+    @StateObject private var receiptListViewModel = ReceiptListViewModel()
+    @StateObject private var receiptCompletionViewModel = ReceiptCompletionViewModel()
 
     var body: some View {
         VStack(spacing: 0) {
             // 메인 컨텐츠
             ZStack {
                 switch selectedIndex {
-                case 0: CheckInListView(checkInListViewModel: checkInListViewModel)
-                case 1: MyCheckInListView(checkInListViewModel: checkInListViewModel)
-                case 2: OrderRequestView(historyViewModel: historyViewModel, formVM: checkInCompletionViewModel)
+                case 0: ReceiptListView(receiptListViewModel: receiptListViewModel)
+                case 1: MyReceiptListView(receiptListViewModel: receiptListViewModel)
+                case 2: OrderRequestView(historyViewModel: historyViewModel, formVM: receiptCompletionViewModel)
                 case 3: OrderHistoryView(historyViewModel: historyViewModel)
                 case 4: MyPageView()
                 default: MyPageView()

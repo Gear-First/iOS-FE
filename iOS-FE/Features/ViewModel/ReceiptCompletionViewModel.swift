@@ -1,31 +1,37 @@
 import Foundation
 
-final class CheckInCompletionViewModel: ObservableObject {
-    @Published var items: [RepairItemForm] = [RepairItemForm()]  // 시작 시 하나
+final class ReceiptCompletionViewModel: ObservableObject {
+    @Published var items: [RepairItemForm] = [RepairItemForm()]
     
     init() {
         if items.isEmpty {
             let first = RepairItemForm()
             first.parentViewModel = self
             items.append(first)
-            print("[DEBUG] 초기 RepairItemForm 생성됨 \(first.id)")
+            print("초기 RepairItemForm 생성됨 \(first.id)")
         }
     }
     
-    // 오늘 날짜 고정
+    // MARK: - 오늘 날짜 문자열
     var todayString: String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "ko_KR")
         f.dateFormat = "yyyy-MM-dd"
         return f.string(from: Date())
     }
- 
+    
+    // MARK: - 항목 추가 / 삭제
     func addItem() {
         let new = RepairItemForm()
         new.parentViewModel = self
         items.append(new)
     }
     
+    func removeItem(_ id: UUID) {
+        items.removeAll { $0.id == id }
+    }
+    
+    // MARK: - 항목 유효성 검사
     func canAddNewItem() -> Bool {
         for form in items {
             // 수리 내용 & 원인은 필수
@@ -41,11 +47,7 @@ final class CheckInCompletionViewModel: ObservableObject {
         return true
     }
     
-    func removeItem(_ id: UUID) {
-        items.removeAll { $0.id == id }
-    }
-
-    // 여러 부품을 고려한 구조로 변경
+    // MARK: - 수리 요청 데이터 구성
     func buildRepairRequest(receiptId: String) -> RepairRequest {
         let details = items.map { item in
             RepairDetailRequest(
@@ -60,14 +62,13 @@ final class CheckInCompletionViewModel: ObservableObject {
                 }
             )
         }
-        
         return RepairRequest(
             receiptHistoryId: receiptId,
             repairDetailRequests: details
         )
     }
-
-    // 10,000 ~ 1,000,000원 사이 랜덤 가격을 자동 지정
+    
+    // MARK: - 임시: 랜덤 단가 채우기
     func autofillRandomPrice(for part: RepairPartForm) {
         let random = Double(Int.random(in: 10...1000) * 1000)
         part.unitPrice = random
@@ -76,37 +77,17 @@ final class CheckInCompletionViewModel: ObservableObject {
     func resetForm() {
         items = [RepairItemForm()] // 항목 하나만 남기고 리셋
     }
-}
+    
+    // MARK: - 수리 상세 등록 API 호출
+    func submitRepairDetails(receiptId: String, formVM: ReceiptCompletionViewModel) async {
+            let requestBody = buildRepairRequest(receiptId: receiptId)
 
-extension CheckInCompletionViewModel {
-    func submitRepairDetails(receiptId: String, formVM: CheckInCompletionViewModel) async {
-        
-        guard let url = URL(string: "http://34.160.169.52/receipt/api/v1/repairDetail") else { return }
-        
-        let requestBody = formVM.buildRepairRequest(receiptId: receiptId)
-        
-        do {
-            let encoded = try JSONEncoder().encode(requestBody)
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.httpBody = encoded
-            print(String(data: encoded, encoding: .utf8)!)
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                if (200..<300).contains(httpResponse.statusCode) {
-                    print("수리 상세 등록 성공")
-                } else {
-                    print("서버 오류 코드: \(httpResponse.statusCode)")
-                    if let body = String(data: data, encoding: .utf8) {
-                        print("Response Body:", body)
-                    }
-                }
+            do {
+                try await ReceiptAPI.submitRepairDetail(request: requestBody)
+                print("수리 상세 등록 성공")
+            } catch {
+                print("수리 상세 등록 실패:", error)
             }
-        } catch {
-            print("요청 실패:", error)
         }
-    }
-
 }
+
