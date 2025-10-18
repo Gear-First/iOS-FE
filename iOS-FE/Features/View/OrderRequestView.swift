@@ -172,7 +172,10 @@ struct OrderRequestView: View {
                         
                         if success {
                             print("발주 요청 성공")
-                            historyViewModel.addNewItem(viewModel.submitRequestOrder()!)
+                            if let newOrder = viewModel.submitRequestOrder() {
+                                let historyItem = viewModel.makeOrderHistoryItem(from: newOrder)
+                                historyViewModel.addNewOrder(historyItem)
+                            }
                             viewModel.resetForm()
                             formVM.resetForm()
                             navigateToHistory = true

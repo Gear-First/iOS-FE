@@ -1,8 +1,10 @@
 import Foundation
 import SwiftUI
 
+@MainActor
 final class OrderHistoryViewModel: ObservableObject {
     
+    // MARK: - 필터
     enum OrderFilter: String, CaseIterable, Identifiable {
         case all = "전체"
         case inProgress = "진행 중"
@@ -11,81 +13,54 @@ final class OrderHistoryViewModel: ObservableObject {
 
         var id: String { rawValue }
 
-        func matches(_ status: OrderStatus) -> Bool {
+        func matches(_ status: String) -> Bool {
             switch self {
-            case .all:
-                return true
-            case .inProgress:
-                return [.PENDING, .APPROVED, .SHIPPED].contains(status)
-            case .completed:
-                return [.COMPLETED].contains(status)
-            case .cancelled:
-                return [.CANCELLED, .REJECTED].contains(status)
+            case .all: return true
+            case .inProgress: return ["PENDING", "APPROVED", "SHIPPED"].contains(status)
+            case .completed: return ["COMPLETED"].contains(status)
+            case .cancelled: return ["CANCELLED", "REJECTED"].contains(status)
             }
         }
     }
     
-    @Published var items: [OrderItem] = []
+    // MARK: - Published
+    @Published var orders: [OrderHistoryItem] = []
     @Published var selectedFilter: OrderFilter = .all
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
-
-    // MARK: - 필터링된 아이템
-    var filteredItems: [OrderItem] {
-        items.filter { selectedFilter.matches($0.orderStatus) }
+    
+    // MARK: - 필터링된 주문
+    var filteredOrders: [OrderHistoryItem] {
+        orders.filter { selectedFilter.matches($0.status) }
     }
     
-    func mapServerStatus(_ status: String) -> OrderStatus {
-        switch status {
-        case "PENDING": return .PENDING
-        case "APPROVED": return .APPROVED
-        case "SHIPPED": return .SHIPPED
-        case "COMPLETED": return .COMPLETED
-        case "CANCELLED": return .CANCELLED
-        case "REJECTED": return .REJECTED
-        default: return .PENDING
-        }
-    }
-    
-    // MARK: - API 호출
-    @MainActor
-    func fetchOrders(branchId: Int, filterType: String) async {
+    // MARK: - 서버에서 주문 불러오기
+    func fetchOrders(branchId: Int, engineerId: Int) async {
         isLoading = true
         errorMessage = nil
+
         do {
-            let apiItems = try await PurchaseOrderAPI.fetchOrderStatus(branchId: branchId, filterType: filterType)
-            
-            // 서버 데이터 → OrderItem 변환
-            self.items = apiItems.flatMap { statusItem in
-                statusItem.items.map { detail in
-                    OrderItem(
-                        inventoryCode: "\(detail.inventoryId)",
-                        inventoryName: detail.name,
-                        quantity: detail.quantity,
-                        requestDate: nil,
-                        id: statusItem.repairNumber,
-                        orderStatus: mapServerStatus(statusItem.status)
-                    )
-                }
-            }
+            // 서버에서 바로 [OrderHistoryItem] 받음
+            let ordersFromServer = try await PurchaseOrderAPI.fetchOrderStatus(branchId: branchId, engineerId: engineerId)
+            self.orders = ordersFromServer
         } catch {
             errorMessage = error.localizedDescription
             print("fetchOrders error: \(error.localizedDescription)")
         }
+
         isLoading = false
     }
-
-    // MARK: - 로컬 데이터 수정
-    func addNewItem(_ item: OrderItem) {
-        items.insert(item, at: 0)
+    
+    // MARK: - 주문 상태 변경
+    func cancelOrder(_ order: OrderHistoryItem) {
+        guard let index = orders.firstIndex(where: { $0.id == order.id }) else { return }
+        var updated = orders[index]
+        updated.status = "CANCELLED"
+        orders[index] = updated
     }
     
-    func updateOrderStatus(_ item: OrderItem, to newStatus: OrderStatus) {
-        guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
-        items[index].orderStatus = newStatus
-    }
-    
-    func cancelOrder(_ item: OrderItem) {
-        updateOrderStatus(item, to: .CANCELLED)
+    // MARK: - 새 주문 추가 (서버에서 받은 데이터 그대로)
+    func addNewOrder(_ newOrder: OrderHistoryItem) {
+        orders.insert(newOrder, at: 0)
     }
 }
