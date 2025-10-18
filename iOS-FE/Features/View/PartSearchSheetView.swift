@@ -1,77 +1,83 @@
 import SwiftUI
 import Foundation
 
-protocol PartSelectable: ObservableObject {
+protocol PartSelectable: ObservableObject, AnyObject {
     var name: String { get set }
     var code: String { get set }
 }
+
+import SwiftUI
 
 struct PartSearchSheetView<ViewModel: PartSelectable>: View {
     @ObservedObject var viewModel: ViewModel
     @Environment(\.dismiss) var dismiss
     @State private var searchText = ""
-
-    let partList = [
-        (name: "브레이크 패드", code: "P001"),
-        (name: "에어필터", code: "P002"),
-        (name: "오일필터", code: "P003")
-    ]
-
-    var filteredList: [(name: String, code: String)] {
-        if searchText.isEmpty { return partList }
-        return partList.filter { $0.name.contains(searchText) }
-    }
-
+    @State private var partList: [PartItem] = []
+    @State private var isLoading = false
+    
     var body: some View {
         NavigationView {
-            VStack {
+            VStack(spacing: 0) {
+                // 검색창
                 EditableField(
                     value: $searchText,
-                    placeholder: "부품명을 입력해주세요"
+                    placeholder: "부품명을 입력"
                 )
-                .padding(.horizontal, 12)
-                
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(filteredList, id: \.code) { item in
-                            partRow(item)
-                        }
-                    }
-                    .padding(.horizontal, 24)
+                .padding()
+                .onSubmit {
+                    Task { await searchParts() }
                 }
-                .padding(.top)
+                
+                if isLoading {
+                    ProgressView("검색 중...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if partList.isEmpty {
+                    Spacer()
+                    Text("검색 결과가 없습니다.")
+                        .foregroundColor(.gray)
+                    Spacer()
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            ForEach(partList) { item in
+                                Button {
+                                    viewModel.name = item.inventoryName
+                                    viewModel.code = item.inventoryId
+                                    dismiss()
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        Text(item.inventoryName)
+                                            .font(.headline)
+                                        Text("\(item.inventoryId)")
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                        Divider()
+                                    }
+                                    .foregroundColor(AppColor.mainBlack)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 12)
+                    }
+                }
             }
             .navigationTitle("부품 검색")
             .navigationBarTitleDisplayMode(.inline)
         }
+        .task { await searchParts() }
     }
     
-    private func partRow(_ item: (name: String, code: String)) -> some View {
-        Button(action: {
-            viewModel.name = item.name
-            viewModel.code = item.code
-            dismiss()
-        }) {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text(item.name)
-                        .font(.headline)
-                        .foregroundColor(AppColor.mainBlack)
-                }
-                Text(item.code)
-                    .font(.subheadline)
-                    .foregroundColor(AppColor.mainTextGray)
-                Divider()
-                    .padding(.vertical, 6)
-            }
+    private func searchParts() async {
+        guard let carModelId = 1 as Int? else { return } // 테스트용, 실제로는 선택 차량 ID
+        isLoading = true
+        do {
+            let response = try await PurchaseOrderAPI.fetchParts(carModelId: carModelId, keyword: searchText)
+            partList = response
+        } catch {
+            print("부품 검색 오류:", error.localizedDescription)
+            partList = []
         }
+        isLoading = false
     }
-}
-
-
-
-
-#Preview {
-    let mockViewModel = OrderRequestViewModel()
-    return PartSearchSheetView(viewModel: mockViewModel)
 }
