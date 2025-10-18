@@ -4,24 +4,23 @@ struct OrderHistoryView: View {
     @ObservedObject var historyViewModel: OrderHistoryViewModel
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 12) {
-                // MARK: - 필터 버튼 (탭 스타일)
+                
+                // MARK: - 필터 버튼
                 HStack(spacing: 0) {
                     ForEach(OrderHistoryViewModel.OrderFilter.allCases) { filter in
                         let isSelected = historyViewModel.selectedFilter == filter
-                        Button(action: {
+                        Button {
                             historyViewModel.selectedFilter = filter
-                        }) {
+                        } label: {
                             VStack(spacing: 4) {
                                 Text(filter.rawValue)
                                     .font(.subheadline)
                                     .foregroundColor(isSelected ? AppColor.mainBlack : AppColor.mainTextGray)
                                     .frame(maxWidth: .infinity)
-                                
-                                // 선택된 탭 밑줄
                                 Rectangle()
-                                    .fill(isSelected ? AppColor.mainBlack: Color.clear)
+                                    .fill(isSelected ? AppColor.mainBlack : Color.clear)
                                     .frame(height: 2)
                             }
                         }
@@ -30,28 +29,21 @@ struct OrderHistoryView: View {
                 .frame(height: 40)
                 .padding(.horizontal)
                 
-                // MARK: - 발주 내역
-                
-                if historyViewModel.filteredItems.isEmpty {
+                // MARK: - 주문 리스트
+                if historyViewModel.filteredOrders.isEmpty {
                     VStack {
                         Spacer()
                         Text("발주 내역이 없습니다.")
                             .foregroundColor(AppColor.mainTextGray)
-                            .font(.body)
-                            .padding()
                         Spacer()
                     }
-                    .frame(maxWidth: .infinity, minHeight: 400)
+                    .frame(maxWidth: .infinity)
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            ForEach(historyViewModel.filteredItems) { item in
-                                NavigationLink(
-                                    destination: OrderDetailView(item: item, onCancel: {
-                                        historyViewModel.cancelOrder(item)
-                                    })
-                                ) {
-                                    orderItemRow(item: item)
+                            ForEach(historyViewModel.filteredOrders) { order in
+                                NavigationLink(value: order) {
+                                    orderRow(order: order)
                                 }
                             }
                         }
@@ -64,40 +56,49 @@ struct OrderHistoryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(AppColor.bgGray)
             .task {
-                await historyViewModel.fetchOrders(branchId: 1, filterType: "")
+                await historyViewModel.fetchOrders(branchId: 2001, engineerId: 1001)
+            }
+            .navigationDestination(for: OrderHistoryItem.self) { order in
+                OrderDetailView(
+                    order: order,
+                    onCancel: { historyViewModel.cancelOrder(order) }
+                )
             }
         }
     }
     
-    // MARK: - Row View 분리
+    // MARK: - 주문 Row
     @ViewBuilder
-    private func orderItemRow(item: OrderItem) -> some View {
-        let statusText = item.orderStatus.rawValue
-        let badgeColor = item.orderStatus.badgeColor
-        
+    private func orderRow(order: OrderHistoryItem) -> some View {
+        let status = OrderStatusMapper.map(order.status)
         VStack(alignment: .leading, spacing: 8) {
-            Text("발주번호: \(item.id)")
-                .font(.headline)
-                .foregroundColor(AppColor.mainBlack)
-            
-            Text("부품: \(item.inventoryName) (\(item.quantity)개)")
-                .font(.subheadline)
-                .foregroundColor(AppColor.mainBlack)
-            
             HStack {
-                Text(statusText)
+                Text("발주번호: \(order.orderNumber)")
+                    .font(.headline)
+                    .foregroundColor(AppColor.mainBlack)
+                Spacer()
+                Text(status.rawValue)
                     .font(.caption)
                     .foregroundColor(AppColor.mainWhite)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(badgeColor)
+                    .background(status.badgeColor)
                     .cornerRadius(6)
-                
-                Spacer()
-                
-                Text(item.requestDate ?? "-")
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(order.items) { item in
+                    Text("\(item.inventoryName) (\(item.quantity)개)")
+                        .font(.subheadline)
+                        .foregroundColor(AppColor.mainBlack)
+                }
+            }
+            
+            HStack {
+                Text("요청일: \(formatDate(order.requestDate))")
                     .font(.caption)
                     .foregroundColor(AppColor.mainTextGray)
+                Spacer()
             }
         }
         .padding()
@@ -105,65 +106,16 @@ struct OrderHistoryView: View {
         .cornerRadius(12)
         .shadow(color: AppColor.mainBlack.opacity(0.05), radius: 4, x: 0, y: 2)
     }
+    
+    // MARK: - 날짜 포맷터
+    private func formatDate(_ isoDate: String) -> String {
+        let isoFormatter = ISO8601DateFormatter()
+        if let date = isoFormatter.date(from: isoDate) {
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .short
+            return formatter.string(from: date)
+        }
+        return isoDate
+    }
 }
-
-//// MARK: - Preview
-//#Preview {
-//    let dummyItems = [
-//        OrderItem(
-//            inventoryCode: "INV-001",
-//            inventoryName: "브레이크 패드",
-//            quantity: 5,
-//            requestDate: "2025-10-04",
-//            id: "ORD-1234",
-//            orderStatus: .승인대기
-//        ),
-//        OrderItem(
-//            inventoryCode: "INV-002",
-//            inventoryName: "에어필터",
-//            quantity: 2,
-//            requestDate: "2025-10-03",
-//            id: "ORD-1235",
-//            orderStatus: .승인완료
-//        ),
-//        OrderItem(
-//            inventoryCode: "INV-003",
-//            inventoryName: "오일필터1",
-//            quantity: 1,
-//            requestDate: "2025-10-04",
-//            id: "ORD-1236",
-//            orderStatus: .취소
-//        ),
-//        OrderItem(
-//            inventoryCode: "INV-004",
-//            inventoryName: "오일필터",
-//            quantity: 1,
-//            requestDate: "2025-10-05",
-//            id: "ORD-1237",
-//            orderStatus: .납품완료
-//        ),
-//        OrderItem(
-//            inventoryCode: "INV-005",
-//            inventoryName: "오일필터",
-//            quantity: 1,
-//            requestDate: "2025-10-06",
-//            id: "ORD-1238",
-//            orderStatus: .출고중
-//        ),
-//        OrderItem(
-//            inventoryCode: "INV-006",
-//            inventoryName: "오일필터",
-//            quantity: 1,
-//            requestDate: "2025-10-07",
-//            id: "ORD-1239",
-//            orderStatus: .반려
-//        )
-//    ]
-//    
-//    // ViewModel 생성 시 기본 필터 지정
-//    let viewModel = OrderHistoryViewModel(items: dummyItems)
-//    viewModel.selectedFilter = .all
-//    
-//    // Preview에서는 단순히 View 반환
-//    return OrderHistoryView(historyViewModel: viewModel)
-//}
