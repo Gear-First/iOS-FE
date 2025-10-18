@@ -119,6 +119,28 @@ struct PartItem: Codable, Identifiable {
     let inventoryName: String
 }
 
+struct OrderRequestBody: Codable {
+    let vehicleNumber: String
+    let vehicleModel: String
+    let engineerId: Int
+    let branchId: Int
+    let items: [OrderItemDTO]
+}
+
+struct OrderItemDTO: Codable {
+    let inventoryId: Int
+    let inventoryName: String
+    let inventoryCode: String
+    let price: Double
+    let quantity: Int
+}
+
+// Response DTO
+struct OrderResponse: Codable {
+    let success: Bool
+    let message: String
+}
+
 struct OrderStatusResponse: Codable {
     let status: Int
     let success: Bool

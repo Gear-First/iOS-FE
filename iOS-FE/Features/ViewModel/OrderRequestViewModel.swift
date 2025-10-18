@@ -40,6 +40,44 @@ final class OrderRequestViewModel: ObservableObject {
         )
     }
     
+    // MARK: - 발주 요청 API
+    func submitOrderToServer(
+        engineerId: Int,
+        branchId: Int,
+        items: [RepairItemForm]
+    ) async -> Bool {
+        guard let vehicle = selectedVehicle else { return false }
+        
+        var itemsDTO: [OrderItemDTO] = []
+        for item in items {
+            for part in item.parts {
+                itemsDTO.append(OrderItemDTO(
+                    inventoryId: part.partId ?? 0,
+                    inventoryName: part.partName,
+                    inventoryCode: part.code,
+                    price: part.unitPrice,
+                    quantity: part.quantity
+                ))
+            }
+        }
+        
+        let body = OrderRequestBody(
+            vehicleNumber: vehicle.plateNumber,
+            vehicleModel: vehicle.model,
+            engineerId: engineerId,
+            branchId: branchId,
+            items: itemsDTO
+        )
+        
+        do {
+            try await PurchaseOrderAPI.createOrder(order: body)
+            return true
+        } catch {
+            print("발주 요청 실패:", error.localizedDescription)
+            return false
+        }
+    }
+    
     // MARK: - 차량 전체 조회(담당자id) API 호출
     func fetchAllVehicles(engineerId: Int) async {
         isLoading = true
