@@ -1,8 +1,8 @@
 import SwiftUI
 
-struct CheckInCompletionView: View {
-    @ObservedObject var detailViewModel: CheckInDetailViewModel
-    @ObservedObject var formVM: CheckInCompletionViewModel
+struct ReceiptCompletionView: View {
+    @ObservedObject var detailViewModel: ReceiptDetailViewModel
+    @ObservedObject var formVM: ReceiptCompletionViewModel
     @Environment(\.dismiss) private var dismiss
     
     @State private var showPartSearch = false
@@ -12,6 +12,12 @@ struct CheckInCompletionView: View {
     
     @State private var showConfirm = false
     @State private var showInvalidAlert = false
+    
+    init(detailViewModel: ReceiptDetailViewModel,
+         formVM: ReceiptCompletionViewModel = ReceiptCompletionViewModel()) {
+        self.detailViewModel = detailViewModel
+        self.formVM = formVM
+    }
     
     var body: some View {
         VStack {
@@ -35,8 +41,8 @@ struct CheckInCompletionView: View {
                                 showQuantityPicker = true
                             },
                             onShowContent: true
-                            )
-                        }
+                        )
+                    }
                     // MARK: - 수리 항목 추가 버튼
                     Button {
                         if formVM.canAddNewItem() {
@@ -70,34 +76,44 @@ struct CheckInCompletionView: View {
         .navigationTitle("수리 완료 입력")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedPart) { part in
-                    PartSearchSheetView(viewModel: part)
-                        .presentationDetents([.height(420)])
-                }
+            PartSearchSheetView(viewModel: part)
+                .presentationDetents([.height(420)])
+        }
         .sheet(item: $selectedQuantityPart) { part in
-                    VStack {
-                        Text("수량 선택")
-                            .font(.headline)
-                            .padding()
-                        Divider()
-                        Picker("수량", selection: Binding(
-                            get: { part.quantity },
-                            set: { part.quantity = $0 }
-                        )) {
-                            ForEach(1..<101, id: \.self) { Text("\($0)").tag($0) }
-                        }
-                        .pickerStyle(WheelPickerStyle())
-                        .labelsHidden()
-
-                        Button("완료") {
-                            selectedQuantityPart = nil
-                        }
-                        .padding(.bottom, 16)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .background(Color.white)
-                    .cornerRadius(16)
-                    .presentationDetents([.height(350)])
+            VStack {
+                Text("수량 선택")
+                    .font(.headline)
+                    .padding()
+                Divider()
+                Picker("수량", selection: Binding(
+                    get: { part.quantity },
+                    set: { part.quantity = $0 }
+                )) {
+                    ForEach(1..<101, id: \.self) { Text("\($0)").tag($0) }
                 }
+                .pickerStyle(WheelPickerStyle())
+                .labelsHidden()
+                
+                Spacer()
+                
+                Button {
+                    selectedQuantityPart = nil
+                } label: {
+                    Text("완료")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .cornerRadius(12)
+                        .padding(.horizontal, 16)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .cornerRadius(20)
+            .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
+            .presentationDetents([.height(350)])
+        }
         .alert("입력 값을 확인해주세요.", isPresented: $showInvalidAlert) {
             Button("확인", role: .cancel) {}
         }
@@ -105,6 +121,7 @@ struct CheckInCompletionView: View {
             Button("완료", role: .destructive) {
                 Task {
                     await formVM.submitRepairDetails(receiptId: detailViewModel.item.id, formVM: formVM)
+//                    await detailViewModel.fetchReceiptDetail(id: detailViewModel.item.id)
                     DispatchQueue.main.async {
                         detailViewModel.item.status = .completed
                         dismiss()
@@ -121,9 +138,9 @@ struct CheckInCompletionView: View {
 // MARK: - Preview
 #Preview {
     NavigationView {
-        CheckInCompletionView(
-            detailViewModel: CheckInDetailViewModel(
-                item: CheckInItem(
+        ReceiptCompletionView(
+            detailViewModel: ReceiptDetailViewModel(
+                item: ReceiptItem(
                     id: "CHK-2025",
                     carNumber: "34가 5678",
                     ownerName: "이수진",
@@ -134,8 +151,7 @@ struct CheckInCompletionView: View {
                     manager: "송지은",
                     status: .inProgress
                 )
-            ),
-            formVM: CheckInCompletionViewModel()
+            )
         )
     }
 }

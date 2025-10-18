@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct CheckInCard: View {
-    let item: CheckInItem
+struct ReceiptCard: View {
+    let item: ReceiptItem
     var showStatus: Bool = false
     
     var body: some View {
@@ -32,7 +32,7 @@ struct CheckInCard: View {
             Divider()
                 .padding(.vertical, -4)
             
-            // MARK: 차량 정보 섹션
+            // MARK: - 차량 정보 섹션
             VStack(alignment: .leading, spacing: 8) {
                 infoRow(label: "차주", value: item.ownerName)
                 infoRow(label: "차량번호", value: item.carNumber)
@@ -53,7 +53,7 @@ struct CheckInCard: View {
         .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
     
-    private func statusColor(for status: CheckInStatus) -> Color {
+    private func statusColor(for status: ReceiptStatus) -> Color {
         switch status {
         case .checkIn: return .blue
         case .inProgress: return .orange
@@ -61,7 +61,7 @@ struct CheckInCard: View {
         }
     }
     
-    // MARK: Helper Row
+    // MARK: - Helper Row
     private func infoRow(label: String, value: String) -> some View {
         HStack {
             Text(label)
@@ -78,7 +78,7 @@ struct CheckInCard: View {
 
 // MARK: - Preview
 #Preview("상태 표시") {
-    let mockItem = CheckInItem(
+    let mockItem = ReceiptItem(
         id: "CHK-2025",
         carNumber: "11가 1234",
         ownerName: "박우진",
@@ -89,12 +89,12 @@ struct CheckInCard: View {
         manager: "정상기",
         status: .completed
     )
-    return CheckInCard(item: mockItem, showStatus: true)
+    return ReceiptCard(item: mockItem, showStatus: true)
         .padding()
 }
 
 #Preview("상태 미표시") {
-    let mockItem = CheckInItem(
+    let mockItem = ReceiptItem(
         id: "CHK-2026",
         carNumber: "22나 5678",
         ownerName: "김민수",
@@ -105,6 +105,6 @@ struct CheckInCard: View {
         manager: nil,
         status: .checkIn
     )
-    return CheckInCard(item: mockItem)
+    return ReceiptCard(item: mockItem)
         .padding()
 }

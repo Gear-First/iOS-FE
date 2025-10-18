@@ -3,7 +3,7 @@ import SwiftUI
 struct OrderRequestView: View {
     @StateObject private var viewModel = OrderRequestViewModel()
     @ObservedObject var historyViewModel: OrderHistoryViewModel
-    @ObservedObject var formVM: CheckInCompletionViewModel
+    @ObservedObject var formVM: ReceiptCompletionViewModel
     @Environment(\.dismiss) var dismiss
     
     @State private var showCarSearch = false

@@ -1,14 +1,14 @@
 import SwiftUI
 
-struct MyCheckInListView: View {
-    @ObservedObject var checkInListViewModel: CheckInListViewModel
+struct MyReceiptListView: View {
+    @ObservedObject var receiptListViewModel: ReceiptListViewModel
     @State private var searchText: String = ""
-    @State private var selectedFilter: CheckInStatus? = nil
+    @State private var selectedFilter: ReceiptStatus? = nil
     
     
     // MARK: - 담당자 필터링 + 상태 필터링 + 검색 적용된 결과
-    private var filteredItems: [CheckInItem] {
-        checkInListViewModel.items.filter { item in
+    private var filteredItems: [ReceiptItem] {
+        receiptListViewModel.items.filter { item in
             // MARK: 상태 필터 (nil = 전체)
             if let status = selectedFilter, item.status != status {
                 return false
@@ -32,7 +32,7 @@ struct MyCheckInListView: View {
                 
                 // MARK: - 상태 필터 탭 (접수 제외)
                 HStack(spacing: 0) {
-                    let filters: [CheckInStatus?] = [nil, .inProgress, .completed]
+                    let filters: [ReceiptStatus?] = [nil, .inProgress, .completed]
                     
                     ForEach(filters, id: \.self) { filter in
                         let title: String = filter?.displayName ?? "전체"
@@ -83,7 +83,7 @@ struct MyCheckInListView: View {
                 .padding(.horizontal, 20)
                 
                 // MARK: - 리스트 영역
-                if checkInListViewModel.isLoading {
+                if receiptListViewModel.isLoading {
                     VStack {
                         Spacer()
                         ProgressView("불러오는 중...")
@@ -92,17 +92,24 @@ struct MyCheckInListView: View {
                         Spacer()
                     }
                 } else if filteredItems.isEmpty {
-                    Text("담당한 접수 이력이 없습니다.")
+                    VStack {
+                        Spacer()
+                        Text("담당한 접수 이력이 없습니다.")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
                         VStack(spacing: 16) {
                             ForEach(filteredItems) { item in
                                 NavigationLink {
-                                    CheckInDetailView(
-                                        checkInDetailViewModel: CheckInDetailViewModel(item: item)
+                                    ReceiptDetailView(
+                                        receiptDetailViewModel: ReceiptDetailViewModel(item: item)
                                     )
                                 } label: {
-                                    CheckInCard(item: item, showStatus: true)
+                                    ReceiptCard(item: item, showStatus: true)
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -116,15 +123,15 @@ struct MyCheckInListView: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(Color(AppColor.bgGray))
             .task {
-                await checkInListViewModel.fetchMyReceipts()
+                await receiptListViewModel.fetchMyReceipts()
             }
-
+            
         }
     }
 }
 
 // MARK: - 상태
-extension CheckInStatus {
+extension ReceiptStatus {
     var displayName: String {
         switch self {
         case .inProgress: return "수리중"
@@ -136,9 +143,9 @@ extension CheckInStatus {
 
 // MARK: - Preview
 #Preview {
-    let checkInListViewModel = CheckInListViewModel()
-    checkInListViewModel.items = [
-        CheckInItem(
+    let receiptListViewModel = ReceiptListViewModel()
+    receiptListViewModel.items = [
+        ReceiptItem(
             id: "CHK-1010",
             carNumber: "12가 3456",
             ownerName: "김민수",
@@ -149,7 +156,7 @@ extension CheckInStatus {
             manager: "송지은",
             status: .inProgress
         ),
-        CheckInItem(
+        ReceiptItem(
             id: "CHK-1011",
             carNumber: "45너 7890",
             ownerName: "박지훈",
@@ -160,7 +167,7 @@ extension CheckInStatus {
             manager: "송지은",
             status: .inProgress
         ),
-        CheckInItem(
+        ReceiptItem(
             id: "CHK-1012",
             carNumber: "33러 5678",
             ownerName: "최유진",
@@ -172,7 +179,7 @@ extension CheckInStatus {
             status: .completed,
             leadTimeDays: 4,
             completionInfos: [
-                CheckInDetailViewModel.CompletionInfo(
+                ReceiptDetailViewModel.CompletionInfo(
                     completionDate: "2025-10-14",
                     repairDescription: "엔진오일 교체",
                     cause: "주행거리 초과",
@@ -181,7 +188,7 @@ extension CheckInStatus {
                     partPrice: 45000,
                     totalPrice: 90000
                 ),
-                CheckInDetailViewModel.CompletionInfo(
+                ReceiptDetailViewModel.CompletionInfo(
                     completionDate: "2025-10-14",
                     repairDescription: "브레이크 패드 교체",
                     cause: "마모 심함",
@@ -194,6 +201,6 @@ extension CheckInStatus {
         )
         
     ]
-    return MyCheckInListView(checkInListViewModel: checkInListViewModel)
+    return MyReceiptListView(receiptListViewModel: receiptListViewModel)
 }
 
