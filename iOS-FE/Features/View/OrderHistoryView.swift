@@ -63,6 +63,9 @@ struct OrderHistoryView: View {
             .navigationTitle("발주 내역")
             .navigationBarTitleDisplayMode(.inline)
             .background(AppColor.bgGray)
+            .task {
+                await historyViewModel.fetchOrders(branchId: 1, filterType: 0)
+            }
         }
     }
     
@@ -92,7 +95,7 @@ struct OrderHistoryView: View {
                 
                 Spacer()
                 
-                Text(item.requestDate)
+                Text(item.requestDate ?? "-")
                     .font(.caption)
                     .foregroundColor(AppColor.mainTextGray)
             }
@@ -104,63 +107,63 @@ struct OrderHistoryView: View {
     }
 }
 
-// MARK: - Preview
-#Preview {
-    let dummyItems = [
-        OrderItem(
-            inventoryCode: "INV-001",
-            inventoryName: "브레이크 패드",
-            quantity: 5,
-            requestDate: "2025-10-04",
-            id: "ORD-1234",
-            orderStatus: .승인대기
-        ),
-        OrderItem(
-            inventoryCode: "INV-002",
-            inventoryName: "에어필터",
-            quantity: 2,
-            requestDate: "2025-10-03",
-            id: "ORD-1235",
-            orderStatus: .승인완료
-        ),
-        OrderItem(
-            inventoryCode: "INV-003",
-            inventoryName: "오일필터1",
-            quantity: 1,
-            requestDate: "2025-10-04",
-            id: "ORD-1236",
-            orderStatus: .취소
-        ),
-        OrderItem(
-            inventoryCode: "INV-004",
-            inventoryName: "오일필터",
-            quantity: 1,
-            requestDate: "2025-10-05",
-            id: "ORD-1237",
-            orderStatus: .납품완료
-        ),
-        OrderItem(
-            inventoryCode: "INV-005",
-            inventoryName: "오일필터",
-            quantity: 1,
-            requestDate: "2025-10-06",
-            id: "ORD-1238",
-            orderStatus: .출고중
-        ),
-        OrderItem(
-            inventoryCode: "INV-006",
-            inventoryName: "오일필터",
-            quantity: 1,
-            requestDate: "2025-10-07",
-            id: "ORD-1239",
-            orderStatus: .반려
-        )
-    ]
-    
-    // ViewModel 생성 시 기본 필터 지정
-    let viewModel = OrderHistoryViewModel(items: dummyItems)
-    viewModel.selectedFilter = .all
-    
-    // Preview에서는 단순히 View 반환
-    return OrderHistoryView(historyViewModel: viewModel)
-}
+//// MARK: - Preview
+//#Preview {
+//    let dummyItems = [
+//        OrderItem(
+//            inventoryCode: "INV-001",
+//            inventoryName: "브레이크 패드",
+//            quantity: 5,
+//            requestDate: "2025-10-04",
+//            id: "ORD-1234",
+//            orderStatus: .승인대기
+//        ),
+//        OrderItem(
+//            inventoryCode: "INV-002",
+//            inventoryName: "에어필터",
+//            quantity: 2,
+//            requestDate: "2025-10-03",
+//            id: "ORD-1235",
+//            orderStatus: .승인완료
+//        ),
+//        OrderItem(
+//            inventoryCode: "INV-003",
+//            inventoryName: "오일필터1",
+//            quantity: 1,
+//            requestDate: "2025-10-04",
+//            id: "ORD-1236",
+//            orderStatus: .취소
+//        ),
+//        OrderItem(
+//            inventoryCode: "INV-004",
+//            inventoryName: "오일필터",
+//            quantity: 1,
+//            requestDate: "2025-10-05",
+//            id: "ORD-1237",
+//            orderStatus: .납품완료
+//        ),
+//        OrderItem(
+//            inventoryCode: "INV-005",
+//            inventoryName: "오일필터",
+//            quantity: 1,
+//            requestDate: "2025-10-06",
+//            id: "ORD-1238",
+//            orderStatus: .출고중
+//        ),
+//        OrderItem(
+//            inventoryCode: "INV-006",
+//            inventoryName: "오일필터",
+//            quantity: 1,
+//            requestDate: "2025-10-07",
+//            id: "ORD-1239",
+//            orderStatus: .반려
+//        )
+//    ]
+//    
+//    // ViewModel 생성 시 기본 필터 지정
+//    let viewModel = OrderHistoryViewModel(items: dummyItems)
+//    viewModel.selectedFilter = .all
+//    
+//    // Preview에서는 단순히 View 반환
+//    return OrderHistoryView(historyViewModel: viewModel)
+//}

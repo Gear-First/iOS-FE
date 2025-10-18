@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-class OrderHistoryViewModel: ObservableObject {
+final class OrderHistoryViewModel: ObservableObject {
     
     enum OrderFilter: String, CaseIterable, Identifiable {
         case all = "전체"
@@ -16,82 +16,66 @@ class OrderHistoryViewModel: ObservableObject {
             case .all:
                 return true
             case .inProgress:
-                return [.승인대기, .승인완료, .출고중].contains(status)
+                return [.pending, .approved, .shipping].contains(status)
             case .completed:
-                return [.납품완료].contains(status)
+                return [.delivered].contains(status)
             case .cancelled:
-                return [.취소, .반려].contains(status)
+                return [.cancelled, .rejected].contains(status)
             }
         }
     }
     
     @Published var items: [OrderItem] = []
     @Published var selectedFilter: OrderFilter = .all
+    @Published var isLoading: Bool = false
+    @Published var errorMessage: String?
 
-    // MARK: - 목데이터
-    static let mockItems: [OrderItem] = [
-        OrderItem(
-            inventoryCode: "INV-001",
-            inventoryName: "브레이크 패드",
-            quantity: 5,
-            requestDate: "2025-10-04",
-            orderStatus: .승인대기
-        ),
-        OrderItem(
-            inventoryCode: "INV-002",
-            inventoryName: "에어필터",
-            quantity: 2,
-            requestDate: "2025-10-03",
-            approvalDate: "2025-10-04",
-            orderStatus: .승인완료
-        ),
-        OrderItem(
-            inventoryCode: "INV-003",
-            inventoryName: "오일필터1",
-            quantity: 1,
-            requestDate: "2025-10-04",
-            orderStatus: .취소
-        ),
-        OrderItem(
-            inventoryCode: "INV-004",
-            inventoryName: "오일필터",
-            quantity: 1,
-            requestDate: "2025-10-05",
-            deliveredDate: "2025-10-06",
-            orderStatus: .납품완료
-        ),
-        OrderItem(
-            inventoryCode: "INV-005",
-            inventoryName: "오일필터",
-            quantity: 1,
-            requestDate: "2025-10-06",
-            deliveryStartDate: "2025-10-07",
-            orderStatus: .출고중
-        ),
-        OrderItem(
-            inventoryCode: "INV-006",
-            inventoryName: "오일필터",
-            quantity: 1,
-            requestDate: "2025-10-07",
-            orderStatus: .반려
-        )
-    ]
-    
-    // MARK: - Init
-    /// 초기화 시 목데이터 사용 가능, 나중에 API 데이터로 교체 가능
-    init(useMockData: Bool = true, items: [OrderItem] = []) {
-        if useMockData {
-            self.items = Self.mockItems
-        } else {
-            self.items = items
-        }
-    }
-
+    // MARK: - 필터링된 아이템
     var filteredItems: [OrderItem] {
         items.filter { selectedFilter.matches($0.orderStatus) }
     }
     
-    // MARK: - Methods
+    func mapServerStatus(_ status: String) -> OrderStatus {
+        switch status {
+        case "승인대기": return .pending
+        case "승인완료": return .approved
+        case "출고중": return .shipping
+        case "납품완료": return .delivered
+        case "취소": return .cancelled
+        case "반려": return .rejected
+        default: return .pending
+        }
+    }
+    
+    // MARK: - API 호출
+    @MainActor
+    func fetchOrders(branchId: Int, filterType: Int) async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            let apiItems = try await PurchaseOrderAPI.fetchOrderStatus(branchId: branchId, filterType: filterType)
+            
+            // 서버 데이터 → OrderItem 변환
+            self.items = apiItems.flatMap { statusItem in
+                statusItem.items.map { detail in
+                    OrderItem(
+                        inventoryCode: "\(detail.inventoryId)",
+                        inventoryName: detail.name,
+                        quantity: detail.quantity,
+                        requestDate: nil,
+                        id: statusItem.repairNumber,
+                        orderStatus: mapServerStatus(statusItem.status)
+                    )
+                }
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+            print("fetchOrders error: \(error.localizedDescription)")
+        }
+        isLoading = false
+    }
+
+    // MARK: - 로컬 데이터 수정
     func addNewItem(_ item: OrderItem) {
         items.insert(item, at: 0)
     }
@@ -102,6 +86,6 @@ class OrderHistoryViewModel: ObservableObject {
     }
     
     func cancelOrder(_ item: OrderItem) {
-        updateOrderStatus(item, to: .취소)
+        updateOrderStatus(item, to: .cancelled)
     }
 }
