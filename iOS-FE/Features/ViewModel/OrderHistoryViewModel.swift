@@ -7,16 +7,16 @@ final class OrderHistoryViewModel: ObservableObject {
     // MARK: - 필터
     enum OrderFilter: String, CaseIterable, Identifiable {
         case all = "전체"
-        case inProgress = "진행 중"
+        case ready = "진행 중"
         case completed = "완료"
         case cancelled = "취소 / 반려"
-
+        
         var id: String { rawValue }
-
+        
         func matches(_ status: String) -> Bool {
             switch self {
             case .all: return true
-            case .inProgress: return ["PENDING", "APPROVED", "SHIPPED"].contains(status)
+            case .ready: return ["PENDING", "APPROVED", "SHIPPED"].contains(status)
             case .completed: return ["COMPLETED"].contains(status)
             case .cancelled: return ["CANCELLED", "REJECTED"].contains(status)
             }
@@ -29,29 +29,32 @@ final class OrderHistoryViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     
-    // MARK: - 필터링된 주문
+    // MARK: - 필터링된 주문 (클라이언트에서 처리)
     var filteredOrders: [OrderHistoryItem] {
         orders.filter { selectedFilter.matches($0.status) }
     }
     
-    // MARK: - 서버에서 주문 불러오기
-    func fetchOrders(branchId: Int, engineerId: Int) async {
+    // MARK: - 서버에서 전체 주문 불러오기 (초기 로딩)
+    func fetchAllOrders(branchId: Int, engineerId: Int) async {
         isLoading = true
         errorMessage = nil
-
+        defer { isLoading = false }
+        
         do {
-            // 서버에서 바로 [OrderHistoryItem] 받음
-            let ordersFromServer = try await PurchaseOrderAPI.fetchOrderStatus(branchId: branchId, engineerId: engineerId)
+            let ordersFromServer = try await PurchaseOrderAPI.fetchOrderAllStatus(branchId: branchId, engineerId: engineerId)
             self.orders = ordersFromServer
         } catch {
             errorMessage = error.localizedDescription
-            print("fetchOrders error: \(error.localizedDescription)")
+            print("fetchAllOrders error: \(error.localizedDescription)")
         }
-
-        isLoading = false
     }
     
-    // MARK: - 주문 상태 변경
+    // MARK: - 새로고침: 전체 데이터 다시 가져오기
+    func refreshOrders(branchId: Int, engineerId: Int) async {
+        await fetchAllOrders(branchId: branchId, engineerId: engineerId)
+    }
+    
+    // MARK: - 주문 상태 변경 (클라이언트)
     func cancelOrder(_ order: OrderHistoryItem) {
         guard let index = orders.firstIndex(where: { $0.id == order.id }) else { return }
         var updated = orders[index]
@@ -59,7 +62,7 @@ final class OrderHistoryViewModel: ObservableObject {
         orders[index] = updated
     }
     
-    // MARK: - 새 주문 추가 (서버에서 받은 데이터 그대로)
+    // MARK: - 새 주문 추가 (클라이언트)
     func addNewOrder(_ newOrder: OrderHistoryItem) {
         orders.insert(newOrder, at: 0)
     }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct OrderHistoryView: View {
-    @ObservedObject var historyViewModel: OrderHistoryViewModel
+    @StateObject var historyViewModel = OrderHistoryViewModel()
     
     var body: some View {
         NavigationStack {
@@ -49,6 +49,10 @@ struct OrderHistoryView: View {
                         }
                         .padding(.horizontal)
                     }
+                    // Pull-to-Refresh
+                    .refreshable {
+                        await historyViewModel.refreshOrders(branchId: 2001, engineerId: 1001)
+                    }
                 }
             }
             .padding(.top, 12)
@@ -56,7 +60,7 @@ struct OrderHistoryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(AppColor.bgGray)
             .task {
-                await historyViewModel.fetchOrders(branchId: 2001, engineerId: 1001)
+                await historyViewModel.fetchAllOrders(branchId: 2001, engineerId: 1001)
             }
             .navigationDestination(for: OrderHistoryItem.self) { order in
                 OrderDetailView(
@@ -67,7 +71,6 @@ struct OrderHistoryView: View {
         }
     }
     
-    // MARK: - 주문 Row
     @ViewBuilder
     private func orderRow(order: OrderHistoryItem) -> some View {
         let status = OrderStatusMapper.map(order.status)
@@ -107,15 +110,21 @@ struct OrderHistoryView: View {
         .shadow(color: AppColor.mainBlack.opacity(0.05), radius: 4, x: 0, y: 2)
     }
     
-    // MARK: - 날짜 포맷터
-    private func formatDate(_ isoDate: String) -> String {
-        let isoFormatter = ISO8601DateFormatter()
-        if let date = isoFormatter.date(from: isoDate) {
-            let formatter = DateFormatter()
-            formatter.dateStyle = .medium
-            formatter.timeStyle = .short
-            return formatter.string(from: date)
+    private func formatDate(_ isoDate: String?) -> String {
+        guard let isoDate = isoDate else { return "-" }
+        
+        let parser = DateFormatter()
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        
+        if let date = parser.date(from: isoDate) {
+            let displayFormatter = DateFormatter()
+            displayFormatter.locale = Locale(identifier: "ko_KR")
+            displayFormatter.dateFormat = "yyyy.MM.dd HH:mm"
+            return displayFormatter.string(from: date)
+        } else {
+            print("날짜 파싱 실패: \(isoDate)")
+            return isoDate
         }
-        return isoDate
     }
 }

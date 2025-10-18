@@ -37,12 +37,20 @@ enum PurchaseOrderAPI {
         )
     }
     
-    // 발주 상태 조회
-    static func fetchOrderStatus(branchId: Int, engineerId: Int) async throws -> [OrderHistoryItem] {
+    // 발주 내역 조회
+    static func fetchOrderAllStatus(branchId: Int, engineerId: Int) async throws -> [OrderHistoryItem] {
         let url = "\(APIConfig.Order.baseURL)/purchase-orders/branch?branchId=\(branchId)&engineerId=\(engineerId)"
         let response: OrderHistoryResponse = try await NetworkManager.shared.request(url: url)
         return response.data
     }
+    
+    // 발주 상태별 조회
+    static func fetchOrderStatus(branchId: Int, engineerId: Int, filterType: String) async throws -> [OrderHistoryItem] {
+        let url = "\(APIConfig.Order.baseURL)/purchase-orders/status?branchId=\(branchId)&engineerId=\(engineerId)&filterType=\(filterType)"
+        let response: OrderHistoryResponse = try await NetworkManager.shared.request(url: url)
+        return response.data
+    }
+
 }
 
 

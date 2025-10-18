@@ -14,10 +14,10 @@ struct OrderDetailView: View {
             SectionCard(title: "진행 상황") {
                 let steps: [OrderStatus] = [.PENDING, .APPROVED, .SHIPPED, .COMPLETED]
                 let stepDates: [OrderStatus: String] = [
-                    .PENDING: order.requestDate,
-                    .APPROVED: order.approvedDate ?? "-",
-                    .SHIPPED: order.transferDate ?? "-",
-                    .COMPLETED: order.completedDate ?? "-"
+                    .PENDING: formatDateYYYYMMDD(order.requestDate),
+                    .APPROVED: formatDateYYYYMMDD(order.approvedDate) ?? "-",
+                    .SHIPPED: formatDateYYYYMMDD(order.transferDate) ?? "-",
+                    .COMPLETED: formatDateYYYYMMDD(order.completedDate) ?? "-"
                 ]
                 let special: OrderStatus? = ["CANCELLED","REJECTED"].contains(order.status) ? status : nil
                 
@@ -39,11 +39,11 @@ struct OrderDetailView: View {
                 rows: [
                     ("발주번호", order.orderNumber),
                     ("총 금액", "\(order.totalPrice)"),
-                    ("요청 일자", order.requestDate),
-                    ("승인 일자", order.approvedDate ?? "-"),
-                    ("이관 일자", order.transferDate ?? "-"),
-                    ("완료 일자", order.completedDate ?? "-"),
-                    ("부품 내역", order.items.map { "\($0.inventoryName) (\($0.quantity)개)" }.joined(separator: ", "))
+                    ("요청 일자", formatDate(order.requestDate)),
+                    ("승인 일자", formatDate(order.approvedDate) ?? "-"),
+                    ("이관 일자", formatDate(order.transferDate) ?? "-"),
+                    ("완료 일자", formatDate(order.completedDate) ?? "-"),
+                    ("부품 내역", order.items.map { "\($0.inventoryName) (\($0.quantity)개)" }.joined(separator: ", ")),
                 ]
             )
             Spacer()
@@ -76,6 +76,45 @@ struct OrderDetailView: View {
                 }
             }
         }
+    }
+    
+    // MARK: - 날짜 포맷터
+    private func formatDate(_ isoDate: String?) -> String {
+        guard let isoDate = isoDate else { return "-" }
+        
+        let parser = DateFormatter()
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
+        
+        if let date = parser.date(from: isoDate) {
+            let displayFormatter = DateFormatter()
+            displayFormatter.locale = Locale(identifier: "ko_KR")
+            displayFormatter.dateFormat = "yyyy.MM.dd HH:mm"
+            return displayFormatter.string(from: date)
+        } else {
+            print("❌ 날짜 파싱 실패: \(isoDate)")
+            return isoDate
+        }
+    }
+    
+    func formatDateYYYYMMDD(_ isoDate: String?) -> String {
+        guard let isoDate = isoDate else { return "-" }
+        
+        let parser = DateFormatter()
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"  // 서버 포맷
+        
+        // 문자열 → Date
+        guard let date = parser.date(from: isoDate) else {
+            print("날짜 파싱 실패: \(isoDate)")
+            return "-"
+        }
+        
+        // Date → YYYYMMDD
+        let displayFormatter = DateFormatter()
+        displayFormatter.locale = Locale(identifier: "ko_KR")
+        displayFormatter.dateFormat = "yy-MM-dd"
+        return displayFormatter.string(from: date)
     }
 }
 
