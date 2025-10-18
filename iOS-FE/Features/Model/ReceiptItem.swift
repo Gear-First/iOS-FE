@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct CheckInItem: Identifiable {
+struct ReceiptItem: Identifiable {
     let id: String              // 접수번호
     let carNumber: String       // 차량번호
     let ownerName: String       // 차주명
@@ -10,10 +10,10 @@ struct CheckInItem: Identifiable {
     let date: String            // 접수일자 (yyyy-MM-dd)
     let phoneNumber: String     // 차주번호
     var manager: String?        // 담당자
-    var status: CheckInStatus   // 상태
+    var status: ReceiptStatus   // 상태
     var leadTimeDays: Int?          // 소요일(요청일~완료일 일수)
     
-    var completionInfos: [CheckInDetailViewModel.CompletionInfo]? = nil
+    var completionInfos: [ReceiptDetailViewModel.CompletionInfo]? = nil
 
     // 날짜 차이 계산 헬퍼 (yyyy-MM-dd)
     static func daysBetween(_ from: String, _ to: String) -> Int? {
@@ -27,7 +27,7 @@ struct CheckInItem: Identifiable {
 
 }
 
-enum CheckInStatus: String, Codable, CaseIterable {
+enum ReceiptStatus: String, Codable, CaseIterable {
     case checkIn = "접수"
     case inProgress = "수리중"
     case completed = "완료"
@@ -67,7 +67,7 @@ struct UsedPart: Codable {
 }
 
 extension ReceiptData {
-    func toCheckInItem() -> CheckInItem {
+    func toReceiptItem() -> ReceiptItem {
         // 오늘 날짜 기본값
         let today = {
             let fmt = DateFormatter()
@@ -76,9 +76,9 @@ extension ReceiptData {
         }()
         
         // 수리 정보 (없으면 빈 배열)
-        let completionInfos: [CheckInDetailViewModel.CompletionInfo] = (repairHistories ?? []).flatMap { history in
+        let completionInfos: [ReceiptDetailViewModel.CompletionInfo] = (repairHistories ?? []).flatMap { history in
             (history.usedParts ?? []).map { part in
-                CheckInDetailViewModel.CompletionInfo(
+                ReceiptDetailViewModel.CompletionInfo(
                     completionDate: today, // 오늘 날짜
                     repairDescription: history.repairDetail ?? "수리 내역 없음",
                     cause: history.repairCause ?? "원인 미정",
@@ -91,7 +91,7 @@ extension ReceiptData {
         }
 
         // 상태 문자열 -> enum 매핑
-        let convertedStatus: CheckInStatus = {
+        let convertedStatus: ReceiptStatus = {
             switch status.lowercased() {
             case "receipt", "접수":
                 return .checkIn
@@ -104,7 +104,7 @@ extension ReceiptData {
             }
         }()
         
-        return CheckInItem(
+        return ReceiptItem(
             id: receiptHistoryId,
             carNumber: receipterCarNum,
             ownerName: receipterName,

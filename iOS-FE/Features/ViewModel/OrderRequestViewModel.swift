@@ -140,3 +140,28 @@ extension OrderRequestViewModel: PartSelectable {
         set { orderCode = newValue }
     }
 }
+
+extension OrderRequestViewModel {
+    func makeOrderHistoryItem(from orderItem: OrderItem) -> OrderHistoryItem {
+        OrderHistoryItem(
+            id: Int.random(in: 0...999_999),
+            orderNumber: orderItem.id,
+            status: "PENDING",
+            totalPrice: Double(orderItem.quantity) * 10000, // 임시 가격
+            requestDate: orderItem.requestDate ?? "",
+            approvedDate: "",   // 아직 없으므로 빈 문자열
+            transferDate: "",
+            completedDate: "",
+            items: [
+                OrderHistoryPart(
+                    id: Int.random(in: 0...999_999),
+                    inventoryName: orderItem.inventoryName,
+                    inventoryCode: orderItem.inventoryCode,
+                    price: 10000,  // 임시 가격
+                    quantity: orderItem.quantity,
+                    totalPrice: Double(orderItem.quantity) * 10000
+                )
+            ]
+        )
+    }
+}

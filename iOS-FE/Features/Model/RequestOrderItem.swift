@@ -1,26 +1,22 @@
 import Foundation
 import SwiftUI
 
+// MARK: - OrderItem (발주 요청용)
 struct OrderItem: Identifiable, Codable {
-    // MARK: - 고유 식별자
     let id: String           // 로컬 고유 ID
     let _id: String?         // 서버에서 받은 MongoDB ObjectID 등
 
-    // MARK: - 기본 정보
     let inventoryCode: String
     let inventoryName: String
     let quantity: Int
 
-    // MARK: - 날짜 정보
-    var requestDate: String?        // 승인대기
-    var approvalDate: String?       // 승인 완료
-    var deliveryStartDate: String?  // 출고중
-    var deliveredDate: String?      // 납품 완료
+    var requestDate: String?
+    var approvalDate: String?
+    var deliveryStartDate: String?
+    var deliveredDate: String?
 
-    // MARK: - 상태
     var orderStatus: OrderStatus
 
-    // MARK: - 생성자
     init(
         inventoryCode: String,
         inventoryName: String,
@@ -45,6 +41,7 @@ struct OrderItem: Identifiable, Codable {
     }
 }
 
+// MARK: - 주문 상태
 enum OrderStatus: String, Codable, CaseIterable, Identifiable {
     case PENDING = "승인 대기"
     case APPROVED = "승인 완료"
@@ -55,17 +52,7 @@ enum OrderStatus: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    // MARK: - UI 표시 이름
-    var displayName: String {
-        switch self {
-        case .PENDING: return "승인 대기"
-        case .APPROVED: return "승인 완료"
-        case .REJECTED: return "반려"
-        case .SHIPPED: return "출고 중"
-        case .COMPLETED: return "납품 완료"
-        case .CANCELLED: return "취소"
-        }
-    }
+    var displayName: String { rawValue }
 
     var badgeColor: Color {
         switch self {
@@ -89,6 +76,7 @@ enum OrderStatus: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - 차량 관련
 struct VehicleResponse: Codable {
     let status: Int
     let success: Bool
@@ -97,15 +85,16 @@ struct VehicleResponse: Codable {
 }
 
 struct Vehicle: Codable, Identifiable {
-    var id: String { repairNumber }
     let repairNumber: String
     let plateNumber: String
     let model: String
     let manufacturer: String
     let registeredDate: String
-//    let carModelId: Int? = 1 // 기본값 추가
+
+    var id: String { repairNumber }
 }
 
+// MARK: - 부품 관련
 struct PartResponse: Codable {
     let status: Int
     let success: Bool
@@ -114,11 +103,13 @@ struct PartResponse: Codable {
 }
 
 struct PartItem: Codable, Identifiable {
-    var id: String { inventoryId }
     let inventoryId: String
     let inventoryName: String
+
+    var id: String { inventoryId }
 }
 
+// MARK: - 주문 요청 DTO
 struct OrderRequestBody: Codable {
     let vehicleNumber: String
     let vehicleModel: String
@@ -135,12 +126,13 @@ struct OrderItemDTO: Codable {
     let quantity: Int
 }
 
-// Response DTO
+// MARK: - 주문 응답
 struct OrderResponse: Codable {
     let success: Bool
     let message: String
 }
 
+// MARK: - 주문 상태 조회
 struct OrderStatusResponse: Codable {
     let status: Int
     let success: Bool
@@ -149,16 +141,46 @@ struct OrderStatusResponse: Codable {
 }
 
 struct OrderStatusItem: Codable, Identifiable {
-    var id: String { repairNumber }
     let repairNumber: String
-    let status: String
+    var status: String
     let items: [OrderStatusPart]
+
+    var id: String { repairNumber }
 }
 
 struct OrderStatusPart: Codable, Identifiable {
     let inventoryId: Int
     let name: String
     let quantity: Int
-    
+
     var id: Int { inventoryId }
+}
+
+// MARK: - 주문 히스토리
+struct OrderHistoryResponse: Decodable {
+    let status: Int
+    let success: Bool
+    let message: String
+    let data: [OrderHistoryItem]
+}
+
+struct OrderHistoryItem: Identifiable, Decodable, Hashable {
+    let id: Int
+    let orderNumber: String
+    var status: String
+    let totalPrice: Double
+    let requestDate: String
+    let approvedDate: String?
+    let transferDate: String?
+    let completedDate: String?
+    let items: [OrderHistoryPart]
+}
+
+struct OrderHistoryPart: Identifiable, Decodable, Hashable {
+    let id: Int
+    let inventoryName: String
+    let inventoryCode: String
+    let price: Double
+    let quantity: Int
+    let totalPrice: Double
 }

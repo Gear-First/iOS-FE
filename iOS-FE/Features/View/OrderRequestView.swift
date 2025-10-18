@@ -3,7 +3,7 @@ import SwiftUI
 struct OrderRequestView: View {
     @StateObject private var viewModel = OrderRequestViewModel()
     @ObservedObject var historyViewModel: OrderHistoryViewModel
-    @ObservedObject var formVM: CheckInCompletionViewModel
+    @ObservedObject var formVM: ReceiptCompletionViewModel
     @Environment(\.dismiss) var dismiss
     
     @State private var showCarSearch = false
@@ -172,7 +172,10 @@ struct OrderRequestView: View {
                         
                         if success {
                             print("발주 요청 성공")
-                            historyViewModel.addNewItem(viewModel.submitRequestOrder()!)
+                            if let newOrder = viewModel.submitRequestOrder() {
+                                let historyItem = viewModel.makeOrderHistoryItem(from: newOrder)
+                                historyViewModel.addNewOrder(historyItem)
+                            }
                             viewModel.resetForm()
                             formVM.resetForm()
                             navigateToHistory = true
