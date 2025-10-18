@@ -23,6 +23,20 @@ enum PurchaseOrderAPI {
         return response.data
        }
 
+    // 발주 생성
+    static func createOrder(order: OrderRequestBody) async throws {
+        let url = "\(baseURL)"
+        
+        let data = try JSONEncoder().encode(order)
+        let jsonData = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+        
+        let _: OrderResponse = try await NetworkManager.shared.request(
+            url: url,
+            method: "POST",
+            body: jsonData
+        )
+    }
+    
     // 발주 상태 조회
     static func fetchOrderStatus(branchId: Int, filterType: String) async throws -> [OrderStatusItem] {
         let url = "\(baseURL)/status?branchId=\(branchId)&filterType=\(filterType)"
@@ -30,4 +44,5 @@ enum PurchaseOrderAPI {
            return response.data
        }
 }
+
 
