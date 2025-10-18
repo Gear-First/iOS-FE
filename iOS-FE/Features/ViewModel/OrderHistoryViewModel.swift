@@ -16,11 +16,11 @@ final class OrderHistoryViewModel: ObservableObject {
             case .all:
                 return true
             case .inProgress:
-                return [.pending, .approved, .shipping].contains(status)
+                return [.PENDING, .APPROVED, .SHIPPED].contains(status)
             case .completed:
-                return [.delivered].contains(status)
+                return [.COMPLETED].contains(status)
             case .cancelled:
-                return [.cancelled, .rejected].contains(status)
+                return [.CANCELLED, .REJECTED].contains(status)
             }
         }
     }
@@ -37,19 +37,19 @@ final class OrderHistoryViewModel: ObservableObject {
     
     func mapServerStatus(_ status: String) -> OrderStatus {
         switch status {
-        case "승인대기": return .pending
-        case "승인완료": return .approved
-        case "출고중": return .shipping
-        case "납품완료": return .delivered
-        case "취소": return .cancelled
-        case "반려": return .rejected
-        default: return .pending
+        case "PENDING": return .PENDING
+        case "APPROVED": return .APPROVED
+        case "SHIPPED": return .SHIPPED
+        case "COMPLETED": return .COMPLETED
+        case "CANCELLED": return .CANCELLED
+        case "REJECTED": return .REJECTED
+        default: return .PENDING
         }
     }
     
     // MARK: - API 호출
     @MainActor
-    func fetchOrders(branchId: Int, filterType: Int) async {
+    func fetchOrders(branchId: Int, filterType: String) async {
         isLoading = true
         errorMessage = nil
         do {
@@ -86,6 +86,6 @@ final class OrderHistoryViewModel: ObservableObject {
     }
     
     func cancelOrder(_ item: OrderItem) {
-        updateOrderStatus(item, to: .cancelled)
+        updateOrderStatus(item, to: .CANCELLED)
     }
 }

@@ -30,7 +30,7 @@ struct OrderItem: Identifiable, Codable {
         deliveryStartDate: String? = nil,
         deliveredDate: String? = nil,
         id: String? = nil,
-        orderStatus: OrderStatus = .pending
+        orderStatus: OrderStatus = .PENDING
     ) {
         self.inventoryCode = inventoryCode
         self.inventoryName = inventoryName
@@ -46,45 +46,45 @@ struct OrderItem: Identifiable, Codable {
 }
 
 enum OrderStatus: String, Codable, CaseIterable, Identifiable {
-    case pending = "승인 대기"
-    case approved = "승인 완료"
-    case rejected = "반려"
-    case shipping = "출고 중"
-    case delivered = "납품 완료"
-    case cancelled = "취소"
+    case PENDING = "승인 대기"
+    case APPROVED = "승인 완료"
+    case REJECTED = "반려"
+    case SHIPPED = "출고 중"
+    case COMPLETED = "납품 완료"
+    case CANCELLED = "취소"
 
     var id: String { rawValue }
 
     // MARK: - UI 표시 이름
     var displayName: String {
         switch self {
-        case .pending: return "승인 대기"
-        case .approved: return "승인 완료"
-        case .rejected: return "반려"
-        case .shipping: return "출고 중"
-        case .delivered: return "납품 완료"
-        case .cancelled: return "취소"
+        case .PENDING: return "승인 대기"
+        case .APPROVED: return "승인 완료"
+        case .REJECTED: return "반려"
+        case .SHIPPED: return "출고 중"
+        case .COMPLETED: return "납품 완료"
+        case .CANCELLED: return "취소"
         }
     }
 
     var badgeColor: Color {
         switch self {
-        case .pending: return AppColor.mainBlue
-        case .approved: return AppColor.mainGreen
-        case .shipping: return AppColor.mainYellow
-        case .delivered: return AppColor.mainGray
-        case .rejected: return AppColor.mainRed
-        case .cancelled: return AppColor.mainRed.opacity(0.8)
+        case .PENDING: return AppColor.mainBlue
+        case .APPROVED: return AppColor.mainGreen
+        case .SHIPPED: return AppColor.mainYellow
+        case .COMPLETED: return AppColor.mainGray
+        case .REJECTED: return AppColor.mainRed
+        case .CANCELLED: return AppColor.mainRed.opacity(0.8)
         }
     }
 
     var progressValue: Double {
         switch self {
-        case .pending: return 0.2
-        case .approved: return 0.4
-        case .shipping: return 0.7
-        case .delivered: return 1.0
-        case .rejected, .cancelled: return 0.0
+        case .PENDING: return 0.2
+        case .APPROVED: return 0.4
+        case .SHIPPED: return 0.7
+        case .COMPLETED: return 1.0
+        case .REJECTED, .CANCELLED: return 0.0
         }
     }
 }

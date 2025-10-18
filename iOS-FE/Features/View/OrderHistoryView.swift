@@ -64,7 +64,7 @@ struct OrderHistoryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .background(AppColor.bgGray)
             .task {
-                await historyViewModel.fetchOrders(branchId: 1, filterType: 0)
+                await historyViewModel.fetchOrders(branchId: 1, filterType: "")
             }
         }
     }

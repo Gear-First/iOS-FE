@@ -20,18 +20,18 @@ struct OrderDetailView: View {
                     
                     // 날짜 딕셔너리 (Optional 기본값 처리)
                     let stepDates: [OrderStatus: String] = [
-                        .pending: item.requestDate ?? "",
-                        .approved: item.approvalDate ?? "",
-                        .shipping: item.deliveryStartDate ?? "",
-                        .delivered: item.deliveredDate ?? ""
+                        .PENDING: item.requestDate ?? "",
+                        .APPROVED: item.approvalDate ?? "",
+                        .SHIPPED: item.deliveryStartDate ?? "",
+                        .COMPLETED: item.deliveredDate ?? ""
                     ]
                     
                     // 취소/반려 여부
-                    let special: OrderStatus? = [.cancelled, .rejected].contains(item.orderStatus) ? item.orderStatus : nil
+                    let special: OrderStatus? = [.CANCELLED, .REJECTED].contains(item.orderStatus) ? item.orderStatus : nil
                     
                     StepProgressView(
                         steps: steps,
-                        currentStep: item.orderStatus ?? .pending,
+                        currentStep: item.orderStatus ?? .PENDING,
                         colorProvider: { _ in AppColor.mainBlue },
                         labelProvider: { $0.rawValue },
                         dates: stepDates,
@@ -61,7 +61,7 @@ struct OrderDetailView: View {
             Spacer()
             
             // 요청 취소 버튼
-            if [.pending, .approved].contains(item.orderStatus) {
+            if [.PENDING, .APPROVED].contains(item.orderStatus) {
                 BaseButton(
                     label: "요청 취소",
                     backgroundColor: .red,
@@ -102,7 +102,7 @@ struct OrderDetailView_Previews: PreviewProvider {
                     quantity: 5,
                     requestDate: "2025-10-04",
                     id: "ORD-1234",
-                    orderStatus: .pending
+                    orderStatus: .PENDING
                 ),
                 onCancel: {
                     print("발주 요청 취소")

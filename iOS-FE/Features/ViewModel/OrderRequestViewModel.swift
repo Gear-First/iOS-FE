@@ -36,7 +36,7 @@ final class OrderRequestViewModel: ObservableObject {
             quantity: orderQuantity,
             requestDate: formattedDate,
             id: UUID().uuidString,
-            orderStatus: .pending
+            orderStatus: .PENDING
         )
     }
     

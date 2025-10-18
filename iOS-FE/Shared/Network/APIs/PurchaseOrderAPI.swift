@@ -23,8 +23,8 @@ enum PurchaseOrderAPI {
         return response.data
        }
 
-    
-    static func fetchOrderStatus(branchId: Int, filterType: Int) async throws -> [OrderStatusItem] {
+    // 발주 상태 조회
+    static func fetchOrderStatus(branchId: Int, filterType: String) async throws -> [OrderStatusItem] {
         let url = "\(baseURL)/status?branchId=\(branchId)&filterType=\(filterType)"
            let response: OrderStatusResponse = try await NetworkManager.shared.request(url: url)
            return response.data
