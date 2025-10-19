@@ -47,6 +47,16 @@ enum ReceiptAPI {
             body: try request.toDictionary()
         )
     }
+    
+    // MARK: - 상세 정보
+    static func fetchReceiptDetail(receiptId: String) async throws -> ReceiptItem {
+        let url = "\(baseURL)/getReceiptDetail?receiptHistoryId=\(receiptId)"
+        let response: ReceiptDetailResponse = try await NetworkManager.shared.request(
+            url: url,
+            method: "GET"
+        )
+        return response.data.toReceiptItem()
+    }
 }
 
 // MARK: - 서버에서 응답이 단순 성공/실패일 때 사용

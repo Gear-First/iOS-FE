@@ -102,3 +102,32 @@ struct PartSelectionSection: View {
         }
     }
 }
+
+#Preview {
+    let mockParts: [RepairPartForm] = [
+        {
+            let part = RepairPartForm()
+            part.partName = "엔진오일"
+            part.quantity = 2
+            return part
+        }(),
+        {
+            let part = RepairPartForm()
+            part.partName = "브레이크 패드"
+            part.quantity = 1
+            return part
+        }()
+    ]
+    
+    return PartSelectionSection(
+        parts: .constant(mockParts),
+        onShowPartSearch: { part in
+            print("검색 탭한 부품: \(part.partName)")
+        },
+        onShowQuantityPicker: { part in
+            print("수량 선택 탭한 부품: \(part.partName)")
+        }
+    )
+    .padding()
+}
+

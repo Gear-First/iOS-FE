@@ -67,19 +67,28 @@ struct RepairItemCard: View {
 }
 
 // MARK: - Preview
-//#Preview {
-//    let repairForm = RepairItemForm()
-//    repairForm.description = "엔진오일 교체"
-//    repairForm.cause = "주행거리 초과"
-//    let part1 = RepairPartForm()
-//    part1.partName = "엔진오일"
-//    part1.quantity = 2
-//    part1.unitPrice = 45000
-//    let part2 = RepairPartForm()
-//    part2.partName = "오일필터"
-//    part2.quantity = 1
-//    part2.unitPrice = 12000
-//    repairForm.parts = [part1, part2]
-//    return RepairItemCard(form: repairForm)
-//        .padding()
-//}
+#Preview("RepairItemCard Preview") {
+    let part1 = RepairPartForm()
+    part1.partName = "엔진오일"
+    part1.quantity = 2
+    part1.unitPrice = 45000
+
+    let part2 = RepairPartForm()
+    part2.partName = "오일필터"
+    part2.quantity = 1
+    part2.unitPrice = 12000
+
+    let repairForm = RepairItemForm()
+    repairForm.description = "엔진오일 교체"
+    repairForm.cause = "주행거리 초과"
+    repairForm.parts = [part1, part2]
+
+    return RepairItemCard(
+        form: repairForm,
+        onRemove: { print("삭제 버튼 클릭") },
+        onShowPartSearch: { part in print("검색 클릭: \(part.partName)") },
+        onShowQuantityPicker: { part in print("수량 선택: \(part.partName)") },
+        onShowContent: true
+    )
+    .padding()
+}
