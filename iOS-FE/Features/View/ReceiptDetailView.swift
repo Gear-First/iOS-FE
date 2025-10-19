@@ -161,6 +161,9 @@ struct ReceiptDetailView: View {
         }
         .navigationTitle("접수 상세")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await receiptDetailViewModel.fetchReceiptDetail(id: receiptDetailViewModel.item.id)
+        }
         .alert(isPresented: $showAlert) {
             switch alertType {
             case .startRepair:
