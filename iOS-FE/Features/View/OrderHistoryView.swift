@@ -29,6 +29,15 @@ struct OrderHistoryView: View {
                 .frame(height: 40)
                 .padding(.horizontal)
                 
+                HStack {
+                    Spacer()
+                    Text("총 \(historyViewModel.filteredOrders.count)건")
+                        .font(.subheadline)
+                        .foregroundColor(AppColor.mainTextGray)
+                        .padding(.trailing, 10)
+                }
+                .padding(.horizontal)
+                
                 // MARK: - 주문 리스트
                 if historyViewModel.filteredOrders.isEmpty {
                     VStack {
