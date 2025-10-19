@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MyReceiptListView: View {
-    @ObservedObject var receiptListViewModel: ReceiptListViewModel
+    @StateObject var receiptListViewModel: ReceiptListViewModel
     @State private var searchText: String = ""
     @State private var selectedFilter: ReceiptStatus? = nil
     

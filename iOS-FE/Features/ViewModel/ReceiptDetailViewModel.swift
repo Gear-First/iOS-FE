@@ -45,19 +45,17 @@ final class ReceiptDetailViewModel: ObservableObject {
         }
     }
 
-    // MARK: - 최신 정보
-//    @MainActor
-//    func fetchReceiptDetail(id: String) async {
-//        do {
-//            // 서버에서 최신 상세 데이터 다시 가져오기
-//            let updatedItem = try await ReceiptAPI.fetchReceiptDetail(receiptId: id)
-//            self.item = updatedItem
-//            print("상세 정보 새로고침 완료:", id)
-//        } catch {
-//            print("상세 정보 새로고침 실패:", error)
-//        }
-//    }
-
+    // MARK: - 상세 정보 API 호출
+    @MainActor
+    func fetchReceiptDetail(id: String) async {
+        do {
+            let updatedItem = try await ReceiptAPI.fetchReceiptDetail(receiptId: id)
+            self.item = updatedItem
+            print("상세 조회 성공:", id)
+        } catch {
+            print("상세 조회 실패:", error)
+        }
+    }
     
     // MARK: - 수리 완료 항목 구조체
     struct CompletionInfo {
