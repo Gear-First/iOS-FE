@@ -30,6 +30,19 @@ struct OrderHistoryView: View {
                 .padding(.horizontal)
                 
                 HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+                    TextField("발주번호, 부품명 검색", text: $historyViewModel.searchText)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
+                }
+                .padding(10)
+                .background(Color.white)
+                .cornerRadius(8)
+                .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
+                .padding(.horizontal)
+                
+                HStack {
                     Spacer()
                     Text("총 \(historyViewModel.filteredOrders.count)건")
                         .font(.subheadline)

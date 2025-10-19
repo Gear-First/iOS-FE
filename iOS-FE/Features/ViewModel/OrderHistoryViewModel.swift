@@ -28,10 +28,19 @@ final class OrderHistoryViewModel: ObservableObject {
     @Published var selectedFilter: OrderFilter = .all
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    @Published var searchText: String = ""
     
-    // MARK: - 필터링된 주문 (클라이언트에서 처리)
+    // MARK: - 필터링 + 검색 적용
     var filteredOrders: [OrderHistoryItem] {
-        orders.filter { selectedFilter.matches($0.status) }
+        orders
+            .filter { selectedFilter.matches($0.status) } // 상태 필터
+            .filter { order in
+                guard !searchText.isEmpty else { return true }
+                let searchLower = searchText.lowercased()
+                // 발주번호 또는 부품명 중 하나라도 포함되면 true
+                return order.orderNumber.lowercased().contains(searchLower) ||
+                       order.items.contains { $0.inventoryName.lowercased().contains(searchLower) }
+            }
     }
     
     // MARK: - 서버에서 전체 주문 불러오기 (초기 로딩)
