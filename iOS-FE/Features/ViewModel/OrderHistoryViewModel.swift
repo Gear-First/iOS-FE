@@ -29,6 +29,7 @@ final class OrderHistoryViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var searchText: String = ""
+    @Published private(set) var cancellingOrderIds: Set<Int> = []  // 개별 취소 로딩 상태 (주문 ID 기준)
     
     // MARK: - 필터링 + 검색 적용
     var filteredOrders: [OrderHistoryItem] {
@@ -39,7 +40,7 @@ final class OrderHistoryViewModel: ObservableObject {
                 let searchLower = searchText.lowercased()
                 // 발주번호 또는 부품명 중 하나라도 포함되면 true
                 return order.orderNumber.lowercased().contains(searchLower) ||
-                       order.items.contains { $0.inventoryName.lowercased().contains(searchLower) }
+                order.items.contains { $0.inventoryName.lowercased().contains(searchLower) }
             }
     }
     
@@ -63,16 +64,45 @@ final class OrderHistoryViewModel: ObservableObject {
         await fetchAllOrders(branchId: branchId, engineerId: engineerId)
     }
     
-    // MARK: - 주문 상태 변경 (클라이언트)
-    func cancelOrder(_ order: OrderHistoryItem) {
-        guard let index = orders.firstIndex(where: { $0.id == order.id }) else { return }
-        var updated = orders[index]
-        updated.status = "CANCELLED"
-        orders[index] = updated
-    }
+    // MARK: - 주문 상태 변경 (Mock)
+//    func cancelOrder(_ order: OrderHistoryItem) {
+//        guard let index = orders.firstIndex(where: { $0.id == order.id }) else { return }
+//        var updated = orders[index]
+//        updated.status = "CANCELLED"
+//        orders[index] = updated
+//    }
     
     // MARK: - 새 주문 추가 (클라이언트)
     func addNewOrder(_ newOrder: OrderHistoryItem) {
         orders.insert(newOrder, at: 0)
+    }
+    
+    // MARK: - 취소 (업데이트 + 실패 시 롤백)
+    func cancelOrder(orderId: Int, branchId: Int, engineerId: Int) async {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        
+        do {
+            let res = try await PurchaseOrderAPI.cancelOrder(
+                orderId: orderId,
+                branchId: branchId,
+                engineerId: engineerId
+            )
+            
+            guard res.success else {
+                errorMessage = res.message
+                return
+            }
+            
+            if let idx = orders.firstIndex(where: { $0.id == orderId }) {
+                var updated = orders[idx]
+                updated.status = "CANCELLED"
+                orders[idx] = updated
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+            print("cancel(orderId:) error: \(error.localizedDescription)")
+        }
     }
 }

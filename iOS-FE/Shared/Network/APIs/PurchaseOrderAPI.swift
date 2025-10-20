@@ -37,6 +37,18 @@ enum PurchaseOrderAPI {
         )
     }
     
+    // 발주 취소
+    static func cancelOrder(orderId: Int, branchId: Int, engineerId: Int) async throws -> MessageResponse {
+        let url = "\(APIConfig.Order.baseURL)/purchase-orders/\(orderId)/cancel?branchId=\(branchId)&engineerId=\(engineerId)"
+        
+        let response: MessageResponse = try await NetworkManager.shared.request(
+            url: url,
+            method: "PATCH",
+            body: nil
+        )
+        return response
+    }
+    
     // 발주 내역 조회
     static func fetchOrderAllStatus(branchId: Int, engineerId: Int) async throws -> [OrderHistoryItem] {
         let url = "\(APIConfig.Order.baseURL)/purchase-orders/branch?branchId=\(branchId)&engineerId=\(engineerId)"

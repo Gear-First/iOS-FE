@@ -4,7 +4,7 @@ struct OrderDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showCancelAlert = false
     
-    let order: OrderHistoryItem
+    @Binding var order: OrderHistoryItem
     let onCancel: () -> Void
     
     private var status: OrderStatus { OrderStatusMapper.map(order.status) }
@@ -92,7 +92,7 @@ struct OrderDetailView: View {
             displayFormatter.dateFormat = "yyyy.MM.dd HH:mm"
             return displayFormatter.string(from: date)
         } else {
-            print("❌ 날짜 파싱 실패: \(isoDate)")
+            print("날짜 파싱 실패: \(isoDate)")
             return isoDate
         }
     }
