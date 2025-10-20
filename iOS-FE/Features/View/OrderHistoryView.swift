@@ -85,10 +85,17 @@ struct OrderHistoryView: View {
                 await historyViewModel.fetchAllOrders(branchId: 2001, engineerId: 1001)
             }
             .navigationDestination(for: OrderHistoryItem.self) { order in
-                OrderDetailView(
-                    order: order,
-                    onCancel: { historyViewModel.cancelOrder(order) }
-                )
+                if let i = historyViewModel.orders.firstIndex(where: { $0.id == order.id }) {
+                    OrderDetailView(order: $historyViewModel.orders[i]) {
+                        Task {
+                            await historyViewModel.cancelOrder(
+                                orderId: order.id,
+                                branchId: 2001,
+                                engineerId: 1001
+                            )
+                        }
+                    }
+                }
             }
         }
     }

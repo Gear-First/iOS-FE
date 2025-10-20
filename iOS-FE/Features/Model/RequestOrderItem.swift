@@ -184,3 +184,9 @@ struct OrderHistoryPart: Identifiable, Decodable, Hashable {
     let quantity: Int
     let totalPrice: Double
 }
+
+struct MessageResponse: Decodable {
+    let status: Int
+    let success: Bool
+    let message: String
+}
