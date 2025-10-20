@@ -14,6 +14,7 @@ final class ReceiptDetailViewModel: ObservableObject {
                 do {
                     try await ReceiptAPI.startRepair(receiptId: item.id)
                     item.status = .inProgress
+                    await fetchReceiptDetail(id: item.id)
                     print("수리 시작 성공:", item.id)
                 } catch {
                     print("수리 시작 실패:", error)
@@ -21,19 +22,13 @@ final class ReceiptDetailViewModel: ObservableObject {
             }
         }
     
-    // MARK: - 상태 업데이트 (예: 접수 -> 수리중 -> 완료)
-    func updateStatus(to newStatus: ReceiptStatus, manager: String? = nil) {
-        item.status = newStatus
-        item.manager = manager
-    }
-    
     // MARK: - 완료 정보 반영
     func applyMultipleCompletionInfo(_ infos: [CompletionInfo]) {
         item.status = .completed
         item.completionInfos = infos
         
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         
         if
             let start = formatter.date(from: item.date),
