@@ -16,7 +16,7 @@ final class ReceiptCompletionViewModel: ObservableObject {
     var todayString: String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "ko_KR")
-        f.dateFormat = "yyyy-MM-dd"
+        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
         return f.string(from: Date())
     }
     
