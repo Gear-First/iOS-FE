@@ -21,10 +21,10 @@ struct ReceiptItem: Identifiable {
     static func daysBetween(_ from: String, _ to: String) -> Int? {
         let fmt = DateFormatter()
         fmt.locale = Locale(identifier: "ko_KR")
-        fmt.dateFormat = "yyyy-MM-dd"
+        fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
         guard let d1 = fmt.date(from: from), let d2 = fmt.date(from: to) else { return nil }
         let days = Calendar.current.dateComponents([.day], from: d1, to: d2).day
-        return days
+        return (days ?? 0) + 1
     }
 
 }
@@ -85,7 +85,7 @@ extension ReceiptDTO {
         // 오늘 날짜 기본값
         let today = {
             let fmt = DateFormatter()
-            fmt.dateFormat = "yyyy-MM-dd"
+            fmt.dateFormat = "yyyy-MM-dd HH:mm:ss"
             return fmt.string(from: Date())
         }()
         
@@ -103,6 +103,12 @@ extension ReceiptDTO {
                 )
             }
         }
+        
+        // leadTimeDays 계산
+        let leadTime: Int? = {
+                guard let firstDate = completionInfos.first?.completionDate else { return nil }
+                return ReceiptItem.daysBetween(today, firstDate)
+            }()
 
         // 문자열 상태를 ReceiptStatus로 변환
         let convertedStatus: ReceiptStatus = {
@@ -128,7 +134,7 @@ extension ReceiptDTO {
             phoneNumber: receipterPhone,
             manager: engineer ?? "미지정",
             status: convertedStatus,
-            leadTimeDays: nil,
+            leadTimeDays: leadTime,
             completionInfos: completionInfos
         )
     }
