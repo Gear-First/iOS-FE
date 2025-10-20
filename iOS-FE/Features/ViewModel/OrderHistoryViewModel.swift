@@ -1,139 +1,78 @@
 import Foundation
 import SwiftUI
 
-class OrderHistoryViewModel: ObservableObject {
+@MainActor
+final class OrderHistoryViewModel: ObservableObject {
     
+    // MARK: - 필터
     enum OrderFilter: String, CaseIterable, Identifiable {
         case all = "전체"
-        case inProgress = "진행 중"
+        case ready = "진행 중"
         case completed = "완료"
         case cancelled = "취소 / 반려"
-
+        
         var id: String { rawValue }
-
-        func matches(_ status: OrderStatus) -> Bool {
+        
+        func matches(_ status: String) -> Bool {
             switch self {
-            case .all:
-                return true
-            case .inProgress:
-                return [.승인대기, .승인완료, .출고중].contains(status)
-            case .completed:
-                return [.납품완료].contains(status)
-            case .cancelled:
-                return [.취소, .반려].contains(status)
+            case .all: return true
+            case .ready: return ["PENDING", "APPROVED", "SHIPPED"].contains(status)
+            case .completed: return ["COMPLETED"].contains(status)
+            case .cancelled: return ["CANCELLED", "REJECTED"].contains(status)
             }
         }
     }
     
-    @Published var items: [OrderItem] = []
+    // MARK: - Published
+    @Published var orders: [OrderHistoryItem] = []
     @Published var selectedFilter: OrderFilter = .all
-
-    // MARK: - 목데이터
-    static let mockItems: [OrderItem] = [
-        // 승인대기
-        OrderItem(
-            inventoryCode: "INV-001",
-            inventoryName: "브레이크 패드",
-            quantity: 5,
-            requestDate: "2025-10-01",
-            approvalDate: nil,
-            deliveryStartDate: nil,
-            deliveredDate: nil,
-            id: "ORD-1001",
-            orderStatus: .승인대기
-        ),
-        
-        // 승인완료
-        OrderItem(
-            inventoryCode: "INV-002",
-            inventoryName: "에어필터",
-            quantity: 2,
-            requestDate: "2025-10-01",
-            approvalDate: "2025-10-02",
-            deliveryStartDate: nil,
-            deliveredDate: nil,
-            id: "ORD-1002",
-            orderStatus: .승인완료
-        ),
-        
-        // 출고중
-        OrderItem(
-            inventoryCode: "INV-003",
-            inventoryName: "오일필터",
-            quantity: 1,
-            requestDate: "2025-10-01",
-            approvalDate: "2025-10-02",
-            deliveryStartDate: "2025-10-03",
-            deliveredDate: nil,
-            id: "ORD-1003",
-            orderStatus: .출고중
-        ),
-        
-        // 납품완료
-        OrderItem(
-            inventoryCode: "INV-004",
-            inventoryName: "브레이크 디스크",
-            quantity: 3,
-            requestDate: "2025-10-01",
-            approvalDate: "2025-10-02",
-            deliveryStartDate: "2025-10-03",
-            deliveredDate: "2025-10-04",
-            id: "ORD-1004",
-            orderStatus: .납품완료
-        ),
-        
-        // 취소
-        OrderItem(
-            inventoryCode: "INV-005",
-            inventoryName: "엔진오일",
-            quantity: 4,
-            requestDate: "2025-10-01",
-            approvalDate: nil,
-            deliveryStartDate: nil,
-            deliveredDate: nil,
-            id: "ORD-1005",
-            orderStatus: .취소
-        ),
-        
-        // 반려
-        OrderItem(
-            inventoryCode: "INV-006",
-            inventoryName: "서스펜션",
-            quantity: 1,
-            requestDate: "2025-10-01",
-            approvalDate: "2025-10-02",
-            deliveryStartDate: nil,
-            deliveredDate: nil,
-            id: "ORD-1006",
-            orderStatus: .반려
-        )
-    ]
+    @Published var isLoading: Bool = false
+    @Published var errorMessage: String?
+    @Published var searchText: String = ""
     
-    // MARK: - Init
-    /// 초기화 시 목데이터 사용 가능, 나중에 API 데이터로 교체 가능
-    init(useMockData: Bool = true, items: [OrderItem] = []) {
-        if useMockData {
-            self.items = Self.mockItems
-        } else {
-            self.items = items
+    // MARK: - 필터링 + 검색 적용
+    var filteredOrders: [OrderHistoryItem] {
+        orders
+            .filter { selectedFilter.matches($0.status) } // 상태 필터
+            .filter { order in
+                guard !searchText.isEmpty else { return true }
+                let searchLower = searchText.lowercased()
+                // 발주번호 또는 부품명 중 하나라도 포함되면 true
+                return order.orderNumber.lowercased().contains(searchLower) ||
+                       order.items.contains { $0.inventoryName.lowercased().contains(searchLower) }
+            }
+    }
+    
+    // MARK: - 서버에서 전체 주문 불러오기 (초기 로딩)
+    func fetchAllOrders(branchId: Int, engineerId: Int) async {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        
+        do {
+            let ordersFromServer = try await PurchaseOrderAPI.fetchOrderAllStatus(branchId: branchId, engineerId: engineerId)
+            self.orders = ordersFromServer
+        } catch {
+            errorMessage = error.localizedDescription
+            print("fetchAllOrders error: \(error.localizedDescription)")
         }
     }
-
-    var filteredItems: [OrderItem] {
-        items.filter { selectedFilter.matches($0.orderStatus) }
+    
+    // MARK: - 새로고침: 전체 데이터 다시 가져오기
+    func refreshOrders(branchId: Int, engineerId: Int) async {
+        await fetchAllOrders(branchId: branchId, engineerId: engineerId)
     }
     
-    // MARK: - Methods
-    func addNewItem(_ item: OrderItem) {
-        items.insert(item, at: 0)
+    // MARK: - 주문 상태 변경 (클라이언트)
+    func cancelOrder(_ order: OrderHistoryItem) {
+        guard let index = orders.firstIndex(where: { $0.id == order.id }) else { return }
+        var updated = orders[index]
+        updated.status = "CANCELLED"
+        orders[index] = updated
     }
     
-    func updateOrderStatus(_ item: OrderItem, to newStatus: OrderStatus) {
-        guard let index = items.firstIndex(where: { $0.id == item.id }) else { return }
-        items[index].orderStatus = newStatus
-    }
-    
-    func cancelOrder(_ item: OrderItem) {
-        updateOrderStatus(item, to: .취소)
+    // MARK: - 새 주문 추가 (클라이언트)
+    func addNewOrder(_ newOrder: OrderHistoryItem) {
+        orders.insert(newOrder, at: 0)
     }
 }

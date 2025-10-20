@@ -3,16 +3,17 @@ import SwiftUI
 struct BottomBar: View {
     @State private var selectedIndex: Int = 0
     @StateObject private var historyViewModel = OrderHistoryViewModel()
-    @StateObject private var checkInListViewModel = CheckInListViewModel()
+    @StateObject private var receiptListViewModel = ReceiptListViewModel()
+    @StateObject private var receiptCompletionViewModel = ReceiptCompletionViewModel()
 
     var body: some View {
         VStack(spacing: 0) {
             // 메인 컨텐츠
             ZStack {
                 switch selectedIndex {
-                case 0: CheckInListView(checkInListViewModel: checkInListViewModel)
-                case 1: MyCheckInListView(checkInListViewModel: checkInListViewModel)
-                case 2: OrderRequestView(historyViewModel: historyViewModel)
+                case 0: ReceiptListView(receiptListViewModel: receiptListViewModel)
+                case 1: MyReceiptListView(receiptListViewModel: receiptListViewModel)
+                case 2: OrderRequestView(historyViewModel: historyViewModel, formVM: receiptCompletionViewModel)
                 case 3: OrderHistoryView(historyViewModel: historyViewModel)
                 case 4: MyPageView()
                 default: MyPageView()
@@ -44,9 +45,7 @@ struct BottomBar: View {
     
     // 바텀바 아이템
     private func bottomBarItem(index: Int, title: String, icon: String) -> some View {
-        Button(action: {
-            selectedIndex = index
-        }) {
+        Button(action: { selectedIndex = index }) {
             VStack(spacing: 2) {
                 Image(systemName: icon)
                     .font(.system(size: 24, weight: .semibold))

@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct CheckInDetailView: View {
-    @ObservedObject var checkInDetailViewModel: CheckInDetailViewModel
+struct ReceiptDetailView: View {
+    @ObservedObject var receiptDetailViewModel: ReceiptDetailViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showAlert = false
     @State private var alertType: AlertType? = nil
@@ -14,35 +14,35 @@ struct CheckInDetailView: View {
         ZStack {
             Color(AppColor.bgGray)
                 .ignoresSafeArea()
-            
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: 20) {
-                        // MARK: 기본 정보 섹션
+
+                        // MARK: - 기본 정보 섹션
                         DetailInfoSection(
                             title: "수리 상세 정보",
-                            statusText: checkInDetailViewModel.item.status.rawValue,
-                            statusColor: statusColor(for: checkInDetailViewModel.item.status),
+                            statusText: receiptDetailViewModel.item.status.rawValue,
+                            statusColor: statusColor(for: receiptDetailViewModel.item.status),
                             rows: {
                                 var rows: [(String, String)] = [
-                                    ("접수번호", checkInDetailViewModel.item.id),
-                                    ("접수일자", checkInDetailViewModel.item.date),
-                                    ("차량번호", checkInDetailViewModel.item.carNumber),
-                                    ("차주", checkInDetailViewModel.item.ownerName),
-                                    ("차주번호", checkInDetailViewModel.item.phoneNumber),
-                                    ("차종", checkInDetailViewModel.item.carModel),
-                                    ("요청사항", checkInDetailViewModel.item.requestContent),
-                                    ("담당자", checkInDetailViewModel.item.manager ?? "-")
+                                    ("접수번호", receiptDetailViewModel.item.id),
+                                    ("접수일자", receiptDetailViewModel.item.date),
+                                    ("차량번호", receiptDetailViewModel.item.carNumber),
+                                    ("차주", receiptDetailViewModel.item.ownerName),
+                                    ("차주번호", receiptDetailViewModel.item.phoneNumber),
+                                    ("차종", receiptDetailViewModel.item.carModel),
+                                    ("요청사항", receiptDetailViewModel.item.requestContent),
+                                    ("담당자", receiptDetailViewModel.item.manager ?? "-")
                                 ]
                                 
                                 // 완료일 있을 경우
-                                if checkInDetailViewModel.item.status == .completed,
-                                   let completion = checkInDetailViewModel.item.completionInfos?.first?.completionDate {
+                                if receiptDetailViewModel.item.status == .completed,
+                                   let completion = receiptDetailViewModel.item.completionInfos?.first?.completionDate {
                                     rows.append(("완료일자", completion))
                                 }
                                 
                                 // 소요일 있을 경우
-                                if let days = checkInDetailViewModel.item.leadTimeDays {
+                                if let days = receiptDetailViewModel.item.leadTimeDays {
                                     rows.append(("소요일", "\(days)일"))
                                 }
                                 
@@ -50,55 +50,67 @@ struct CheckInDetailView: View {
                             }()
                         )
                         
-                        
-                        // MARK: 완료 정보
-                        if checkInDetailViewModel.item.status == .completed {
-                            if let infos = checkInDetailViewModel.item.completionInfos {
+                        // MARK: - 완료 정보
+                        if receiptDetailViewModel.item.status == .completed {
+                            if let infos = receiptDetailViewModel.item.completionInfos {
                                 VStack(alignment: .leading, spacing: 14) {
-                                    // MARK: - 제목
+                                    // MARK: 제목
+                                    let grouped = Dictionary(grouping: infos, by: { $0.repairDescription })
                                     HStack {
                                         Text("수리 완료 정보")
                                             .font(.title3)
                                             .fontWeight(.semibold)
                                         Spacer()
-                                        Text("총 \(infos.count)건")
+                                        Text("총 \(grouped.keys.count)건")
                                             .font(.callout)
                                             .foregroundColor(.gray)
                                     }
                                     
                                     Divider().padding(.bottom, 6)
                                     
-                                    // MARK: 리스트
-                                    VStack(alignment: .leading, spacing: 18) {
-                                        ForEach(infos.indices, id: \.self) { index in
-                                            let info = infos[index]
-                                            
-                                            VStack(alignment: .leading, spacing: 8) {
-                                                HStack {
-                                                    Text("\(index + 1). \(info.repairDescription)")
-                                                        .font(.system(size: 18))
-                                                        .fontWeight(.bold)
-                                                    Spacer()
-                                                    Text(formattedPrice(info.totalPrice))
+                                    ForEach(Array(grouped.keys.enumerated()), id: \.1) { index, key in
+                                        if let group = grouped[key], let first = group.first {
+                                            VStack(alignment: .leading, spacing: 10) {
+                                                // MARK: 수리내용 + 원인
+                                                VStack(alignment: .leading, spacing: 10) {
+                                                    Text("\(index + 1). \(first.repairDescription)")
+                                                        .font(.title3)
+                                                    Text("원인: \(first.cause)")
                                                         .font(.body)
+                                                }
+                                                
+                                                // MARK: - 부품 리스트
+                                                VStack(alignment: .leading, spacing: 6) {
+                                                    ForEach(group, id: \.partName) { part in
+                                                        VStack(alignment: .leading, spacing: 2) {
+                                                            HStack {
+                                                                Text(part.partName)
+                                                                    .font(.body)
+                                                                Spacer()
+                                                                Text(formattedPrice(part.partPrice))
+                                                                    .font(.body)
+                                                                    .fontWeight(.medium)
+                                                                    .foregroundColor(AppColor.mainBlue)
+                                                            }
+                                                            Text("수량: \(part.partQuantity)EA")
+                                                                .font(.body)
+                                                                .foregroundColor(.gray)
+                                                        }
+                                                        Divider().padding(.vertical, 4).opacity(0.15)
+                                                    }
+                                                }
+                                                .padding(.horizontal, 2)
+                                                
+                                                // MARK: - 항목 합계
+                                                HStack {
+                                                    Spacer()
+                                                    Text("항목 합계: \(formattedPrice(group.reduce(0) { $0 + $1.totalPrice }))")
+                                                        .font(.callout)
                                                         .fontWeight(.semibold)
                                                         .foregroundColor(.green)
                                                 }
-                                                
-                                                VStack(alignment: .leading, spacing: 4) {
-                                                    Text("원인: \(info.cause)")
-                                                        .font(.body)
-                                                        .foregroundColor(.black)
-                                                    Text("부품: \(info.partName) (\(info.partQuantity)개)")
-                                                        .font(.callout)
-                                                        .foregroundColor(.primary)
-                                                }
                                             }
-                                            .padding(.vertical, 6)
-                                            
-                                            if index < infos.count - 1 {
-                                                Divider().opacity(0.25)
-                                            }
+                                            Divider().padding(.vertical, 4)
                                         }
                                     }
                                     
@@ -110,7 +122,7 @@ struct CheckInDetailView: View {
                                             .fontWeight(.bold)
                                             .foregroundColor(AppColor.mainBlue)
                                     }
-                                    .padding(.top, 10)
+                                    .padding(.top, 12)
                                 }
                                 .padding(20)
                                 .background(
@@ -128,8 +140,8 @@ struct CheckInDetailView: View {
                     .padding()
                 }
                 
-                // MARK: 하단 고정 버튼
-                if checkInDetailViewModel.item.status == .checkIn {
+                // MARK: - 하단 고정 버튼
+                if receiptDetailViewModel.item.status == .checkIn {
                     BaseButton(label: "수리 시작", backgroundColor: Color.blue) {
                         alertType = .startRepair
                         showAlert = true
@@ -137,15 +149,21 @@ struct CheckInDetailView: View {
                     .padding(.horizontal, 20)
                     .padding(.vertical, 24)
                     .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: -1)
-                } else if checkInDetailViewModel.item.status == .inProgress {
+                } else if receiptDetailViewModel.item.status == .inProgress {
                     bottomBarNavigationLink(title: "수리 완료", color: .green) {
-                        CheckInCompletionView(detailViewModel: checkInDetailViewModel)
+                        ReceiptCompletionView(
+                            detailViewModel: receiptDetailViewModel,
+                            formVM: receiptDetailViewModel.completionFormVM
+                        )
                     }
                 }
             }
         }
         .navigationTitle("접수 상세")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await receiptDetailViewModel.fetchReceiptDetail(id: receiptDetailViewModel.item.id)
+        }
         .alert(isPresented: $showAlert) {
             switch alertType {
             case .startRepair:
@@ -153,7 +171,7 @@ struct CheckInDetailView: View {
                     title: Text("수리를 시작하시겠습니까?"),
                     message: Text("담당자 정보가 등록됩니다."),
                     primaryButton: .destructive(Text("확인")) {
-                        checkInDetailViewModel.updateStatus(to: .inProgress, manager: "송지은")
+                        receiptDetailViewModel.startRepair()
                     },
                     secondaryButton: .cancel(Text("취소"))
                 )
@@ -163,7 +181,7 @@ struct CheckInDetailView: View {
         }
     }
     
-    // MARK: Info Row
+    // MARK: - Info Row
     private func infoRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
@@ -175,7 +193,7 @@ struct CheckInDetailView: View {
         .font(.subheadline)
     }
     
-    // MARK: 하단 고정 NavigationLink 버튼
+    // MARK: - 수리 중 버튼
     private func bottomBarNavigationLink<Destination: View>(title: String, color: Color, @ViewBuilder destination: () -> Destination) -> some View {
         VStack {
             NavigationLink(destination: destination()) {
@@ -193,8 +211,8 @@ struct CheckInDetailView: View {
         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: -1)
     }
     
-    // MARK: 상태 색상
-    private func statusColor(for status: CheckInStatus) -> Color {
+    // MARK: - 상태 색상
+    private func statusColor(for status: ReceiptStatus) -> Color {
         switch status {
         case .checkIn: return .blue
         case .inProgress: return .orange
@@ -202,10 +220,12 @@ struct CheckInDetailView: View {
         }
     }
     
-    private func totalPrice(of infos: [CheckInDetailViewModel.CompletionInfo]) -> Double {
+    // MARK: - 총 합계
+    private func totalPrice(of infos: [ReceiptDetailViewModel.CompletionInfo]) -> Double {
         infos.reduce(0) { $0 + $1.totalPrice }
     }
     
+    // MARK: - 가격 스타일링
     private func formattedPrice(_ value: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
@@ -214,11 +234,12 @@ struct CheckInDetailView: View {
     
 }
 
+// MARK: - Preview
 #Preview("접수 상태") {
     NavigationView {
-        CheckInDetailView(
-            checkInDetailViewModel: CheckInDetailViewModel(
-                item: CheckInItem(
+        ReceiptDetailView(
+            receiptDetailViewModel: ReceiptDetailViewModel(
+                item: ReceiptItem(
                     id: "CHK-1010",
                     carNumber: "12가 3456",
                     ownerName: "김민수",
@@ -236,9 +257,9 @@ struct CheckInDetailView: View {
 
 #Preview("수리중 상태") {
     NavigationView {
-        CheckInDetailView(
-            checkInDetailViewModel: CheckInDetailViewModel(
-                item: CheckInItem(
+        ReceiptDetailView(
+            receiptDetailViewModel: ReceiptDetailViewModel(
+                item: ReceiptItem(
                     id: "CHK-1011",
                     carNumber: "45너 7890",
                     ownerName: "박지훈",
@@ -256,22 +277,22 @@ struct CheckInDetailView: View {
 
 #Preview("완료 상태") {
     NavigationView {
-        CheckInDetailView(
-            checkInDetailViewModel: CheckInDetailViewModel(
-                item: CheckInItem(
-                    id: "CHK-1012",
-                    carNumber: "33러 5678",
-                    ownerName: "최유진",
-                    carModel: "투싼",
-                    requestContent: "냉각수 점검 및 보충",
+        ReceiptDetailView(
+            receiptDetailViewModel: ReceiptDetailViewModel(
+                item: ReceiptItem(
+                    id: "CHK-2025",
+                    carNumber: "12가 3456",
+                    ownerName: "김민수",
+                    carModel: "그랜저",
+                    requestContent: "정기 점검 및 교체",
                     date: "2025-10-10",
-                    phoneNumber: "010-2222-3333",
-                    manager: "김성민",
+                    phoneNumber: "010-1111-2222",
+                    manager: "정우성",
                     status: .completed,
-                    leadTimeDays: 4,
+                    leadTimeDays: 3,
                     completionInfos: [
-                        CheckInDetailViewModel.CompletionInfo(
-                            completionDate: "2025-10-14",
+                        ReceiptDetailViewModel.CompletionInfo(
+                            completionDate: "2025-10-13",
                             repairDescription: "엔진오일 교체",
                             cause: "주행거리 초과",
                             partName: "엔진오일",
@@ -279,8 +300,26 @@ struct CheckInDetailView: View {
                             partPrice: 45000,
                             totalPrice: 90000
                         ),
-                        CheckInDetailViewModel.CompletionInfo(
-                            completionDate: "2025-10-14",
+                        ReceiptDetailViewModel.CompletionInfo(
+                            completionDate: "2025-10-13",
+                            repairDescription: "엔진오일 교체",
+                            cause: "주행거리 초과",
+                            partName: "오일필터",
+                            partQuantity: 1,
+                            partPrice: 12000,
+                            totalPrice: 12000
+                        ),
+                        ReceiptDetailViewModel.CompletionInfo(
+                            completionDate: "2025-10-13",
+                            repairDescription: "엔진오일 교체",
+                            cause: "주행거리 초과",
+                            partName: "드레인 플러그 패킹",
+                            partQuantity: 1,
+                            partPrice: 3000,
+                            totalPrice: 3000
+                        ),
+                        ReceiptDetailViewModel.CompletionInfo(
+                            completionDate: "2025-10-13",
                             repairDescription: "브레이크 패드 교체",
                             cause: "마모 심함",
                             partName: "브레이크 패드",
