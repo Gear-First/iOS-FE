@@ -11,7 +11,6 @@ struct ReceiptDetailView: View {
     }
     
     var body: some View {
-        //
         VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 20) {
