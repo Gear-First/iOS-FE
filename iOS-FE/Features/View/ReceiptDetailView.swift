@@ -11,156 +11,73 @@ struct ReceiptDetailView: View {
     }
     
     var body: some View {
-        ZStack {
-            Color(AppColor.bgGray)
-                .ignoresSafeArea()
-            VStack(spacing: 0) {
-                ScrollView {
-                    VStack(spacing: 20) {
-
-                        // MARK: - 기본 정보 섹션
-                        DetailInfoSection(
-                            title: "수리 상세 정보",
-                            statusText: receiptDetailViewModel.item.status.rawValue,
-                            statusColor: statusColor(for: receiptDetailViewModel.item.status),
-                            rows: {
-                                var rows: [(String, String)] = [
-                                    ("접수번호", receiptDetailViewModel.item.id),
-                                    ("접수일자", receiptDetailViewModel.item.date),
-                                    ("차량번호", receiptDetailViewModel.item.carNumber),
-                                    ("차주", receiptDetailViewModel.item.ownerName),
-                                    ("차주번호", receiptDetailViewModel.item.phoneNumber),
-                                    ("차종", receiptDetailViewModel.item.carModel),
-                                    ("요청사항", receiptDetailViewModel.item.requestContent),
-                                    ("담당자", receiptDetailViewModel.item.manager ?? "-")
-                                ]
-                                
-                                // 완료일 있을 경우
-                                if receiptDetailViewModel.item.status == .completed,
-                                   let completion = receiptDetailViewModel.item.completionInfos?.first?.completionDate {
-                                    rows.append(("완료일자", completion))
-                                }
-                                
-                                // 소요일 있을 경우
-                                if let days = receiptDetailViewModel.item.leadTimeDays {
-                                    rows.append(("소요일", "\(days)일"))
-                                }
-                                
-                                return rows
-                            }()
-                        )
-                        
-                        // MARK: - 완료 정보
-                        if receiptDetailViewModel.item.status == .completed {
-                            if let infos = receiptDetailViewModel.item.completionInfos {
-                                VStack(alignment: .leading, spacing: 14) {
-                                    // MARK: 제목
-                                    let grouped = Dictionary(grouping: infos, by: { $0.repairDescription })
-                                    HStack {
-                                        Text("수리 완료 정보")
-                                            .font(.title3)
-                                            .fontWeight(.semibold)
-                                        Spacer()
-                                        Text("총 \(grouped.keys.count)건")
-                                            .font(.callout)
-                                            .foregroundColor(.gray)
-                                    }
-                                    
-                                    Divider().padding(.bottom, 6)
-                                    
-                                    ForEach(Array(grouped.keys.enumerated()), id: \.1) { index, key in
-                                        if let group = grouped[key], let first = group.first {
-                                            VStack(alignment: .leading, spacing: 10) {
-                                                // MARK: 수리내용 + 원인
-                                                VStack(alignment: .leading, spacing: 10) {
-                                                    Text("\(index + 1). \(first.repairDescription)")
-                                                        .font(.title3)
-                                                    Text("원인: \(first.cause)")
-                                                        .font(.body)
-                                                }
-                                                
-                                                // MARK: - 부품 리스트
-                                                VStack(alignment: .leading, spacing: 6) {
-                                                    ForEach(group, id: \.partName) { part in
-                                                        VStack(alignment: .leading, spacing: 2) {
-                                                            HStack {
-                                                                Text(part.partName)
-                                                                    .font(.body)
-                                                                Spacer()
-                                                                Text(formattedPrice(part.partPrice))
-                                                                    .font(.body)
-                                                                    .fontWeight(.medium)
-                                                                    .foregroundColor(AppColor.mainBlue)
-                                                            }
-                                                            Text("수량: \(part.partQuantity)EA")
-                                                                .font(.body)
-                                                                .foregroundColor(.gray)
-                                                        }
-                                                        Divider().padding(.vertical, 4).opacity(0.15)
-                                                    }
-                                                }
-                                                .padding(.horizontal, 2)
-                                                
-                                                // MARK: - 항목 합계
-                                                HStack {
-                                                    Spacer()
-                                                    Text("항목 합계: \(formattedPrice(group.reduce(0) { $0 + $1.totalPrice }))")
-                                                        .font(.callout)
-                                                        .fontWeight(.semibold)
-                                                        .foregroundColor(.green)
-                                                }
-                                            }
-                                            Divider().padding(.vertical, 4)
-                                        }
-                                    }
-                                    
-                                    // MARK: - 총 합계
-                                    HStack {
-                                        Spacer()
-                                        Text("총 합계: \(formattedPrice(totalPrice(of: infos)))")
-                                            .font(.title3)
-                                            .fontWeight(.bold)
-                                            .foregroundColor(AppColor.mainBlue)
-                                    }
-                                    .padding(.top, 12)
-                                }
-                                .padding(20)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 18)
-                                        .fill(Color.white)
-                                        .shadow(color: .black.opacity(0.08), radius: 5, x: 0, y: 2)
-                                )
-                                .padding(.bottom, 10)
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // MARK: - 기본 정보 섹션
+                    DetailInfoSection(
+                        title: "수리 상세 정보",
+                        statusText: receiptDetailViewModel.item.status.rawValue,
+                        statusColor: statusColor(for: receiptDetailViewModel.item.status),
+                        rows: {
+                            var rows: [(String, String)] = [
+                                ("접수번호", receiptDetailViewModel.item.id),
+                                ("접수일자", receiptDetailViewModel.item.date),
+                                ("차량번호", receiptDetailViewModel.item.carNumber),
+                                ("차주", receiptDetailViewModel.item.ownerName),
+                                ("차주번호", receiptDetailViewModel.item.phoneNumber),
+                                ("차종", receiptDetailViewModel.item.carModel),
+                                ("요청사항", receiptDetailViewModel.item.requestContent),
+                                ("담당자", receiptDetailViewModel.item.manager ?? "-")
+                            ]
+                            
+                            // 완료일 있을 경우
+                            if receiptDetailViewModel.item.status == .completed,
+                               let completion = receiptDetailViewModel.item.completionInfos?.first?.completionDate {
+                                rows.append(("완료일자", completion))
                             }
-                        }
-                        
-                        
-                        Spacer().frame(height: 80) // 버튼과의 간격 확보
+                            
+                            // 소요일 있을 경우
+                            if let days = receiptDetailViewModel.item.leadTimeDays {
+                                rows.append(("소요일", "\(days)일"))
+                            }
+                            
+                            return rows
+                        }()
+                    )
+                    
+                    // MARK: - 완료 정보
+                    if receiptDetailViewModel.item.status == .completed {
+                        CompletionInfoSection(infos: receiptDetailViewModel.item.completionInfos ?? [])
                     }
-                    .padding()
+                    
+                    Spacer().frame(height: 80) // 버튼과의 간격 확보
                 }
-                
-                // MARK: - 하단 고정 버튼
-                if receiptDetailViewModel.item.status == .checkIn {
-                    BaseButton(label: "수리 시작", backgroundColor: Color.blue) {
-                        alertType = .startRepair
-                        showAlert = true
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 24)
-                    .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: -1)
-                } else if receiptDetailViewModel.item.status == .inProgress {
-                    bottomBarNavigationLink(title: "수리 완료", color: .green) {
-                        ReceiptCompletionView(
-                            detailViewModel: receiptDetailViewModel,
-                            formVM: receiptDetailViewModel.completionFormVM
-                        )
-                    }
+                .padding()
+            }
+            
+            // MARK: - 하단 고정 버튼
+            if receiptDetailViewModel.item.status == .checkIn {
+                BaseButton(label: "수리 시작", backgroundColor: Color.blue) {
+                    alertType = .startRepair
+                    showAlert = true
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 24)
+                .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: -1)
+            } else if receiptDetailViewModel.item.status == .inProgress {
+                bottomBarNavigationLink(title: "수리 완료", color: .green) {
+                    ReceiptCompletionView(
+                        detailViewModel: receiptDetailViewModel,
+                        formVM: receiptDetailViewModel.completionFormVM
+                    )
                 }
             }
         }
         .navigationTitle("접수 상세")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color(AppColor.bgGray), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
         .task {
             await receiptDetailViewModel.fetchReceiptDetail(id: receiptDetailViewModel.item.id)
         }
@@ -179,6 +96,8 @@ struct ReceiptDetailView: View {
                 return Alert(title: Text("오류"), message: Text("잘못된 동작입니다."), dismissButton: .default(Text("확인")))
             }
         }
+        
+        .background(AppColor.bgGray)
     }
     
     // MARK: - Info Row
@@ -220,18 +139,106 @@ struct ReceiptDetailView: View {
         }
     }
     
-    // MARK: - 총 합계
+}
+
+/// 완료된 수리 정보를 모아 보여주는 섹션 뷰
+struct CompletionInfoSection: View {
+    let infos: [ReceiptDetailViewModel.CompletionInfo]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            let grouped = Dictionary(grouping: infos, by: { $0.repairDescription })
+            HStack {
+                Text("수리 완료 정보").font(.title3).fontWeight(.semibold)
+                Spacer()
+                Text("총 \(grouped.keys.count)건").font(.callout).foregroundColor(.gray)
+            }
+            Divider().padding(.bottom, 6)
+            
+            ForEach(Array(grouped.keys.enumerated()), id: \.1) { index, key in
+                if let group = grouped[key] {
+                    CompletionGroupView(index: index, group: group)
+                }
+            }
+            HStack {
+                Spacer()
+                Text("총 합계: \(formattedPrice(totalPrice(of: infos)))")
+                    .font(.title3).fontWeight(.bold).foregroundColor(AppColor.mainBlue)
+            }
+            .padding(.top, 12)
+        }
+        .padding(20)
+        .background(RoundedRectangle(cornerRadius: 18).fill(Color.white).shadow(color: .black.opacity(0.08), radius: 5, x: 0, y: 2))
+        .padding(.bottom, 10)
+    }
+    
     private func totalPrice(of infos: [ReceiptDetailViewModel.CompletionInfo]) -> Double {
         infos.reduce(0) { $0 + $1.totalPrice }
     }
     
-    // MARK: - 가격 스타일링
     private func formattedPrice(_ value: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         return (formatter.string(from: NSNumber(value: value)) ?? "0") + "원"
     }
+}
+
+/// 하나의 수리 내역 그룹(수리 내용 + 원인 + 부품 리스트 + 항목 합계)을 표시하는 뷰
+struct CompletionGroupView: View {
+    let index: Int
+    let group: [ReceiptDetailViewModel.CompletionInfo]
     
+    var body: some View {
+        if let first = group.first {
+            VStack(alignment: .leading, spacing: 10) {
+                // 수리 내용 + 원인
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("\(index + 1). \(first.repairDescription)")
+                        .font(.title3)
+                    Text("원인: \(first.cause)")
+                        .font(.body)
+                }
+                
+                // 부품 리스트
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(group, id: \.partName) { part in
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack {
+                                Text(part.partName)
+                                    .font(.body)
+                                Spacer()
+                                Text(formattedPrice(part.partPrice))
+                                    .font(.body)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(AppColor.mainBlue)
+                            }
+                            Text("수량: \(part.partQuantity)EA")
+                                .font(.body)
+                                .foregroundColor(.gray)
+                        }
+                        Divider().padding(.vertical, 4).opacity(0.15)
+                    }
+                }
+                .padding(.horizontal, 2)
+                
+                // 항목 합계
+                HStack {
+                    Spacer()
+                    Text("항목 합계: \(formattedPrice(group.reduce(0) { $0 + $1.totalPrice }))")
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.green)
+                }
+            }
+            Divider().padding(.vertical, 4)
+        }
+    }
+    
+    private func formattedPrice(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return (formatter.string(from: NSNumber(value: value)) ?? "0") + "원"
+    }
 }
 
 // MARK: - Preview
