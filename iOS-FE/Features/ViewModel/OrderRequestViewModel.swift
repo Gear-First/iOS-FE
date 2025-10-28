@@ -4,12 +4,12 @@ import SwiftUI
 @MainActor
 final class OrderRequestViewModel: ObservableObject {
     // MARK: - 차량 검색 결과
-    @Published var vehicleList: [Vehicle] = []
+    @Published var vehicleList: [ReceiptVehicle] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     
     // MARK: - 선택 차량
-    @Published var selectedVehicle: Vehicle?
+    @Published var selectedVehicle: ReceiptVehicle?
     
     // MARK: - 부품 관련
     @Published var orderName: String = ""     // 부품명
@@ -26,9 +26,9 @@ final class OrderRequestViewModel: ObservableObject {
         return formatter
     }
     
-    // MARK: - 주문 생성
+    // MARK: - 주문 생성(로컬 모델)
     func submitRequestOrder() -> OrderItem? {
-        guard let vehicle = selectedVehicle else { return nil }
+        guard selectedVehicle != nil else { return nil }
         let formattedDate = dateFormatter.string(from: requestDate)
         return OrderItem(
             inventoryCode: orderCode.isEmpty ? "AUTO" : orderCode,
@@ -40,37 +40,53 @@ final class OrderRequestViewModel: ObservableObject {
         )
     }
     
+    // MARK: - 서버 전송용 바디 생성 (수정: OrderCreateRequest를 반환)
+    /// RepairItemForm 배열을 요청 DTO 배열로 변환하고, 선택 차량을 이용해 최종 요청 바디를 만든다.
+    private func makeCreateRequest(
+        engineerId: Int,
+        branchId: Int,
+        items: [RepairItemForm]
+    ) -> OrderCreateRequest? {
+        guard let v = selectedVehicle else { return nil }
+        
+        // 요청용 DTO만 사용 (응답용 OrderHistoryPart 사용 X)
+        var itemDTOs: [OrderItemDTO] = []
+        for item in items {
+            for part in item.parts {
+                itemDTOs.append(
+                    OrderItemDTO(
+                        // 서버 계약에 따라 inventoryId가 필수면 값 넣기, 선택이면 nil 가능
+                        inventoryId: part.partId,         // Int? 라면 그대로 전달
+                        inventoryName: part.partName,
+                        inventoryCode: part.code,
+                        quantity: part.quantity
+                    )
+                )
+            }
+        }
+        
+        return OrderCreateRequest(
+            vehicleNumber: v.carNum,    // ReceiptVehicle 사용
+            vehicleModel: v.carType,
+            engineerId: engineerId,
+            branchId: branchId,
+            items: itemDTOs
+        )
+    }
+    
     // MARK: - 발주 요청 API
     func submitOrderToServer(
         engineerId: Int,
         branchId: Int,
         items: [RepairItemForm]
     ) async -> Bool {
-        guard let vehicle = selectedVehicle else { return false }
-        
-        var itemsDTO: [OrderItemDTO] = []
-        for item in items {
-            for part in item.parts {
-                itemsDTO.append(OrderItemDTO(
-                    inventoryId: part.partId ?? 0,
-                    inventoryName: part.partName,
-                    inventoryCode: part.code,
-                    price: part.unitPrice,
-                    quantity: part.quantity
-                ))
-            }
+        // 수정: 위에서 만든 createRequest를 사용
+        guard let body = makeCreateRequest(engineerId: engineerId, branchId: branchId, items: items) else {
+            return false
         }
         
-        let body = OrderRequestBody(
-            vehicleNumber: vehicle.plateNumber,
-            vehicleModel: vehicle.model,
-            engineerId: engineerId,
-            branchId: branchId,
-            items: itemsDTO
-        )
-        
         do {
-            try await PurchaseOrderAPI.createOrder(order: body)
+            try await PurchaseOrderAPI.createOrder(order: body) // OrderCreateRequest 사용
             return true
         } catch {
             print("발주 요청 실패:", error.localizedDescription)
@@ -78,12 +94,12 @@ final class OrderRequestViewModel: ObservableObject {
         }
     }
     
-    // MARK: - 차량 전체 조회(담당자id) API 호출
-    func fetchAllVehicles(engineerId: Int) async {
+    // MARK: - 차량 전체 조회 API 호출
+    func fetchAllVehicles() async {
         isLoading = true
         errorMessage = nil
         do {
-            let vehicles = try await PurchaseOrderAPI.fetchAllVehicles(engineerId: engineerId)
+            let vehicles = try await PurchaseOrderAPI.fetchAllVehicles()
             self.vehicleList = vehicles
         } catch {
             self.errorMessage = error.localizedDescription
@@ -95,12 +111,12 @@ final class OrderRequestViewModel: ObservableObject {
     // MARK: - 부품 리스트
     @Published var partList: [PartItem] = []
     
-    // MARK: - 부품 검색 API
-    func fetchParts(for carModelId: Int, keyword: String = "") async {
+    // MARK: - 부품 검색 (Mock)
+    func fetchPartsMock() async {
         isLoading = true
         errorMessage = nil
         do {
-            let parts = try await PurchaseOrderAPI.fetchParts(carModelId: carModelId, keyword: keyword)
+            let parts = try await PurchaseOrderAPI.fetchPartsMock()
             self.partList = parts
         } catch {
             self.errorMessage = error.localizedDescription
@@ -108,7 +124,6 @@ final class OrderRequestViewModel: ObservableObject {
         }
         isLoading = false
     }
-    
     
     // MARK: - 유효성 검사
     var isValid: Bool {
@@ -141,27 +156,30 @@ extension OrderRequestViewModel: PartSelectable {
     }
 }
 
+// MARK: - 잘못된 함수 교체 (요청용으로 변경)
+// 기존의 makeOrderHistoryItem(from:)은 응답용 타입(OrderHistoryPart)을 사용하고
+// OrderItem에 없는 필드를 접근하므로 삭제/교체합니다.
+// 필요 시 아래와 같은 오버로드를 추가로 둘 수 있습니다.
 extension OrderRequestViewModel {
-    func makeOrderHistoryItem(from orderItem: OrderItem) -> OrderHistoryItem {
-        OrderHistoryItem(
-            id: Int.random(in: 0...999_999),
-            orderNumber: orderItem.id,
-            status: "PENDING",
-            totalPrice: Double(orderItem.quantity) * 10000, // 임시 가격
-            requestDate: orderItem.requestDate ?? "",
-            approvedDate: "",   // 아직 없으므로 빈 문자열
-            transferDate: "",
-            completedDate: "",
-            items: [
-                OrderHistoryPart(
-                    id: Int.random(in: 0...999_999),
-                    inventoryName: orderItem.inventoryName,
-                    inventoryCode: orderItem.inventoryCode,
-                    price: 10000,  // 임시 가격
-                    quantity: orderItem.quantity,
-                    totalPrice: Double(orderItem.quantity) * 10000
-                )
-            ]
+    /// 단일 OrderItem으로 요청 바디를 만들고 싶을 때(샘플)
+    func makeCreateRequest(
+        from orderItem: OrderItem,
+        engineerId: Int,
+        branchId: Int
+    ) -> OrderCreateRequest? {
+        guard let v = selectedVehicle else { return nil }
+        let dto = OrderItemDTO(
+            inventoryId: nil,                    // 서버 계약에 따라 값 세팅
+            inventoryName: orderItem.inventoryName,
+            inventoryCode: orderItem.inventoryCode,
+            quantity: orderItem.quantity
+        )
+        return OrderCreateRequest(
+            vehicleNumber: v.carNum,
+            vehicleModel: v.carType,
+            engineerId: engineerId,
+            branchId: branchId,
+            items: [dto]
         )
     }
 }

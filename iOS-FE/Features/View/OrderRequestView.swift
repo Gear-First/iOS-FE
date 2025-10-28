@@ -19,16 +19,13 @@ struct OrderRequestView: View {
     private var isFormValid: Bool {
         // 차량 정보 유효성 검사
         guard let vehicle = viewModel.selectedVehicle,
-              !vehicle.plateNumber.isEmpty,
-              !vehicle.model.isEmpty,
-              !vehicle.manufacturer.isEmpty
+              !vehicle.carNum.isEmpty,
+              !vehicle.carType.isEmpty
         else {
             return false
         }
-        
         // 항목 유효성 검사
         guard !formVM.items.isEmpty else { return false }
-        
         // 부품 유효성 검사
         for item in formVM.items {
             if item.parts.isEmpty { return false }
@@ -38,19 +35,18 @@ struct OrderRequestView: View {
                 if part.quantity < 1 { return false }
             }
         }
-        
         return true
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 ScrollView {
                     VStack(spacing: 24) {
                         // MARK: - 차량 선택
                         SectionCard(title: "차량 선택") {
                             EditableField(
-                                value: .constant(viewModel.selectedVehicle?.plateNumber ?? ""),
+                                value: .constant(viewModel.selectedVehicle?.carNum ?? ""),
                                 placeholder: "차량번호를 선택하세요",
                                 isEditable: false
                             ) {
@@ -62,17 +58,12 @@ struct OrderRequestView: View {
                                     HStack {
                                         Text("차량번호")
                                         Spacer()
-                                        Text(vehicle.plateNumber)
+                                        Text(vehicle.carNum)
                                     }
                                     HStack {
                                         Text("차종")
                                         Spacer()
-                                        Text(vehicle.model)
-                                    }
-                                    HStack {
-                                        Text("제조사")
-                                        Spacer()
-                                        Text(vehicle.manufacturer)
+                                        Text(vehicle.carType)
                                     }
                                 }
                                 .font(.subheadline)
@@ -117,6 +108,12 @@ struct OrderRequestView: View {
                         showConfirmAlert = true
                     }
                 }
+                
+                NavigationLink(
+                    destination: OrderHistoryView(), // OrderHistoryView가 기본 생성자만 있을 때
+                    isActive: $navigateToHistory
+                ) { EmptyView() }
+                .hidden()
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 24)
@@ -171,21 +168,44 @@ struct OrderRequestView: View {
                         )
                         
                         if success {
-                            print("발주 요청 성공")
+                            // 서버 성공 후: 로컬 히스토리에 1건 추가(모델 분리 유지)
                             if let newOrder = viewModel.submitRequestOrder() {
-                                let historyItem = viewModel.makeOrderHistoryItem(from: newOrder)
+                                let historyItem = makeLocalHistoryItem(from: newOrder)
                                 historyViewModel.addNewOrder(historyItem)
                             }
                             viewModel.resetForm()
                             formVM.resetForm()
                             navigateToHistory = true
-                        }
-                        else {
+                        } else {
                             print("발주 요청 실패")
                         }
                     }
                 }
             }
         }
+    }
+    
+    // 로컬 OrderItem → 조회용 OrderHistoryItem(임시) 매핑
+    // 서버에서 생성된 정확한 값이 필요하면, addNewOrder 대신 목록 재조회(API)로 교체
+    private func makeLocalHistoryItem(from item: OrderItem) -> OrderHistoryItem {
+        OrderHistoryItem(
+            orderId: Int.random(in: 10000...99999),
+            orderNumber: "PO-\(Int(Date().timeIntervalSince1970))",
+            status: "PENDING",
+            totalPrice: 0, // 서버가 계산하는 값이면 0 또는 추정치
+            requestDate: item.requestDate ?? "",
+            approvedDate: nil,
+            transferDate: nil,
+            completedDate: nil,
+            items: [
+                OrderHistoryPart(
+                    id: Int.random(in: 1...9999),
+                    inventoryName: item.inventoryName,
+                    inventoryCode: item.inventoryCode,
+                    price: 0,
+                    quantity: item.quantity
+                )
+            ]
+        )
     }
 }

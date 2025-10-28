@@ -1,5 +1,5 @@
 enum APIConfig {
-    static let baseDomain = "http://34.160.169.52"
+    static let baseDomain = "http://34.120.215.23"
     
     enum Order {
         static let baseURL = "\(baseDomain)/order/api/v1"

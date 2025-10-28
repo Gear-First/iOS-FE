@@ -63,7 +63,7 @@ struct OrderHistoryView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
-                            ForEach(historyViewModel.filteredOrders) { order in
+                            ForEach(historyViewModel.filteredOrders, id: \.orderId) { order in
                                 NavigationLink(value: order) {
                                     orderRow(order: order)
                                 }
@@ -71,7 +71,6 @@ struct OrderHistoryView: View {
                         }
                         .padding(.horizontal)
                     }
-                    // Pull-to-Refresh
                     .refreshable {
                         await historyViewModel.refreshOrders(branchId: 2001, engineerId: 1001)
                     }
@@ -85,11 +84,11 @@ struct OrderHistoryView: View {
                 await historyViewModel.fetchAllOrders(branchId: 2001, engineerId: 1001)
             }
             .navigationDestination(for: OrderHistoryItem.self) { order in
-                if let i = historyViewModel.orders.firstIndex(where: { $0.id == order.id }) {
+                if let i = historyViewModel.orders.firstIndex(where: { $0.orderId == order.orderId }) {
                     OrderDetailView(order: $historyViewModel.orders[i]) {
                         Task {
                             await historyViewModel.cancelOrder(
-                                orderId: order.id,
+                                orderId: order.orderId,
                                 branchId: 2001,
                                 engineerId: 1001
                             )
@@ -139,21 +138,43 @@ struct OrderHistoryView: View {
         .shadow(color: AppColor.mainBlack.opacity(0.05), radius: 4, x: 0, y: 2)
     }
     
-    private func formatDate(_ isoDate: String?) -> String {
-        guard let isoDate = isoDate else { return "-" }
+    private func formatDate(_ raw: String?) -> String {
+        guard let raw = raw else { return "-" }
         
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds] // 2025-10-28T12:34:56.789Z
+        if let d = iso.date(from: raw) {
+            return displayString(from: d)
+        }
+        // 밀리초 없는 형태 대응
+        iso.formatOptions = [.withInternetDateTime] // 2025-10-28T12:34:56Z
+        if let d = iso.date(from: raw) {
+            return displayString(from: d)
+        }
+        // 2) 커스텀 포맷 백업 (서버가 지역시간 문자열을 줄 경우)
+        let fmts = [
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd"
+        ]
         let parser = DateFormatter()
         parser.locale = Locale(identifier: "en_US_POSIX")
-        parser.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS"
-        
-        if let date = parser.date(from: isoDate) {
-            let displayFormatter = DateFormatter()
-            displayFormatter.locale = Locale(identifier: "ko_KR")
-            displayFormatter.dateFormat = "yyyy.MM.dd HH:mm"
-            return displayFormatter.string(from: date)
-        } else {
-            print("날짜 파싱 실패: \(isoDate)")
-            return isoDate
+        for f in fmts {
+            parser.dateFormat = f
+            if let d = parser.date(from: raw) {
+                return displayString(from: d)
+            }
         }
+        // 실패 시 원문 반환
+        print("날짜 파싱 실패: \(raw)")
+        return raw
+    }
+    
+    private func displayString(from date: Date) -> String {
+        let display = DateFormatter()
+        display.locale = Locale(identifier: "ko_KR")
+        display.dateFormat = "yyyy.MM.dd HH:mm"
+        return display.string(from: date)
     }
 }
