@@ -15,7 +15,7 @@ struct CarSearchSheetView: View {
                 .padding(.horizontal, 12)
                 .onChange(of: searchText) { newValue in
                     Task {
-                        await viewModel.fetchAllVehicles(engineerId: 1)
+                        await viewModel.fetchAllVehicles()
                     }
                 }
 
@@ -36,21 +36,21 @@ struct CarSearchSheetView: View {
                                 } label: {
                                     VStack(alignment: .leading, spacing: 6) {
                                         HStack {
-                                            Text(vehicle.plateNumber)
+                                            Text(vehicle.carNum)
                                                 .font(.headline)
                                                 .foregroundColor(AppColor.mainBlack)
                                             Spacer()
-                                            Text(vehicle.repairNumber)
-                                                .font(.caption)
-                                                .foregroundColor(AppColor.mainTextGray)
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 2)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 4)
-                                                        .fill(AppColor.mainBorderGray.opacity(0.6))
-                                                )
+//                                            Text(vehicle.repairNumber)
+//                                                .font(.caption)
+//                                                .foregroundColor(AppColor.mainTextGray)
+//                                                .padding(.horizontal, 8)
+//                                                .padding(.vertical, 2)
+//                                                .background(
+//                                                    RoundedRectangle(cornerRadius: 4)
+//                                                        .fill(AppColor.mainBorderGray.opacity(0.6))
+//                                                )
                                         }
-                                        Text(vehicle.model)
+                                        Text(vehicle.carType)
                                             .font(.subheadline)
                                             .foregroundColor(AppColor.mainTextGray)
                                         Divider()
@@ -67,7 +67,7 @@ struct CarSearchSheetView: View {
             .navigationTitle("차량번호 검색")
             .navigationBarTitleDisplayMode(.inline)
             .task {
-                await viewModel.fetchAllVehicles(engineerId: 1) // 초기 전체 목록
+                await viewModel.fetchAllVehicles() // 초기 전체 목록
             }
         }
     }

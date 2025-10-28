@@ -41,14 +41,14 @@ struct PartSearchSheetView<ViewModel: PartSelectable>: View {
                         LazyVStack(spacing: 12) {
                             ForEach(partList) { item in
                                 Button {
-                                    viewModel.name = item.inventoryName
-                                    viewModel.code = item.inventoryId
+                                    viewModel.name = item.partName
+                                    viewModel.code = item.partCode
                                     dismiss()
                                 } label: {
                                     VStack(alignment: .leading, spacing: 6) {
-                                        Text(item.inventoryName)
+                                        Text(item.partName)
                                             .font(.headline)
-                                        Text("\(item.inventoryId)")
+                                        Text("\(item.partCode)")
                                             .font(.subheadline)
                                             .foregroundColor(.gray)
                                         Divider()
@@ -72,7 +72,8 @@ struct PartSearchSheetView<ViewModel: PartSelectable>: View {
         guard let carModelId = 1 as Int? else { return } // 테스트용, 실제로는 선택 차량 ID
         isLoading = true
         do {
-            let response = try await PurchaseOrderAPI.fetchParts(carModelId: carModelId, keyword: searchText)
+//            let response = try await PurchaseOrderAPI.fetchParts(carModelId: carModelId, keyword: searchText)
+            let response = try await PurchaseOrderAPI.fetchPartsMock()
             partList = response
         } catch {
             print("부품 검색 오류:", error.localizedDescription)

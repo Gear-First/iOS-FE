@@ -95,7 +95,7 @@ final class OrderHistoryViewModel: ObservableObject {
                 return
             }
             
-            if let idx = orders.firstIndex(where: { $0.id == orderId }) {
+            if let idx = orders.firstIndex(where: { $0.orderId == orderId }) {
                 var updated = orders[idx]
                 updated.status = "CANCELLED"
                 orders[idx] = updated
