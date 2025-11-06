@@ -62,4 +62,19 @@ final class ReceiptDetailViewModel: ObservableObject {
         let partPrice: Double           // 단가
         let totalPrice: Double          // 총액 (수량 * 단가)
     }
+    
+}
+
+
+extension ReceiptDetailViewModel {
+    @MainActor
+    func fetchCompleteParts(receiptNum: String, vehicleNumber: String) async -> [OrderItem]? {
+        do {
+            let orders = try await ReceiptAPI.fetchCompleteParts(receiptNum: receiptNum, vehicleNumber: vehicleNumber)
+            return orders
+        } catch {
+            print("발주 내역 조회 실패:", error)
+            return nil
+        }
+    }
 }

@@ -27,105 +27,109 @@ struct MyReceiptListView: View {
     }
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 10) {
-                
-                // MARK: - 상태 필터 탭 (접수 제외)
-                HStack(spacing: 0) {
-                    let filters: [ReceiptStatus?] = [nil, .inProgress, .completed]
-                    
-                    ForEach(filters, id: \.self) { filter in
-                        let title: String = filter?.displayName ?? "전체"
-                        let isSelected = selectedFilter == filter
-                        
-                        Button {
-                            withAnimation(.easeInOut) {
-                                selectedFilter = filter
-                            }
-                        } label: {
-                            VStack(spacing: 4) {
-                                Text(title)
-                                    .font(.subheadline)
-                                    .foregroundColor(isSelected ? AppColor.mainBlack : AppColor.mainTextGray)
-                                    .frame(maxWidth: .infinity)
-                                
-                                Rectangle()
-                                    .fill(isSelected ? AppColor.mainBlack : .clear)
-                                    .frame(height: 2)
-                            }
-                        }
-                    }
-                }
-                .frame(height: 40)
-                .padding(.horizontal)
-                
-                // MARK: - 상단 검색창
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                    TextField("차량번호, 차주명 검색", text: $searchText)
-                        .textInputAutocapitalization(.never)
-                        .disableAutocorrection(true)
-                }
-                .padding(10)
-                .background(Color.white)
-                .cornerRadius(8)
-                .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
-                .padding(.horizontal)
-                
-                // MARK: - 총 개수 표시
-                HStack {
-                    Spacer()
-                    Text("총 \(filteredItems.count)건")
-                        .font(.subheadline)
-                        .foregroundColor(AppColor.mainTextGray)
-                }
-                .padding(.horizontal, 20)
-                
-                // MARK: - 리스트 영역
-                if receiptListViewModel.isLoading {
+        NavigationStack {
+            Group {
+                if receiptListViewModel.isLoading && receiptListViewModel.items.isEmpty {
                     VStack {
-                        Spacer()
                         ProgressView("불러오는 중...")
                             .progressViewStyle(CircularProgressViewStyle(tint: AppColor.mainBlue))
                             .font(.headline)
-                        Spacer()
-                    }
-                } else if filteredItems.isEmpty {
-                    VStack {
-                        Spacer()
-                        Text("담당한 접수 이력이 없습니다.")
-                            .font(.headline)
-                            .foregroundColor(.gray)
-                        Spacer()
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
-                        VStack(spacing: 16) {
-                            ForEach(filteredItems) { item in
-                                NavigationLink {
-                                    ReceiptDetailView(
-                                        receiptDetailViewModel: ReceiptDetailViewModel(item: item)
-                                    )
-                                } label: {
-                                    ReceiptCard(item: item, showStatus: true)
-                                }
-                                .buttonStyle(.plain)
-                            }
+                        VStack(alignment: .leading, spacing: 20) {
+                            filterTabs
+                            GFSearchField(
+                                text: $searchText,
+                                placeholder: "차량번호, 차주명 검색"
+                            )
+                            totalCount
+                            contentSection
                         }
-                        .padding(.horizontal)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 24)
                     }
                 }
             }
             .navigationTitle("접수 내역")
             .navigationBarTitleDisplayMode(.inline)
-            .background(Color(AppColor.bgGray))
+            .background(AppColor.background.ignoresSafeArea())
             .task {
                 await receiptListViewModel.fetchMyReceipts()
             }
-            
+        }
+        .background(AppColor.background)
+    }
+
+    private var filterTabs: some View {
+        let filters: [ReceiptStatus?] = [nil, .inProgress, .completed]
+        return HStack(spacing: 12) {
+            ForEach(filters, id: \.self) { filter in
+                let title = filter?.displayName ?? "전체"
+                let isSelected = selectedFilter == filter
+                Button {
+                    withAnimation(.spring(duration: 0.25)) {
+                        selectedFilter = filter
+                    }
+                } label: {
+                    Text(title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(isSelected ? AppColor.surface : AppColor.textMuted)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(isSelected ? AppColor.mainBlue : AppColor.surface)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(isSelected ? AppColor.mainBlue.opacity(0.35) : AppColor.cardBorder, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var totalCount: some View {
+        HStack {
+            Text("총 \(filteredItems.count)건")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(AppColor.mainTextBlack)
+            Spacer()
+        }
+    }
+
+    private var contentSection: some View {
+        Group {
+            if receiptListViewModel.isLoading {
+                ProgressView("불러오는 중...")
+                    .progressViewStyle(CircularProgressViewStyle(tint: AppColor.mainBlue))
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 40)
+            } else if filteredItems.isEmpty {
+                EmptyStateView(
+                    title: "담당한 접수 이력이 없습니다.",
+                    message: "필터 조건을 조정하거나 새로운 접수를 확인하세요.",
+                    systemImage: "clock.arrow.circlepath"
+                )
+                .frame(maxWidth: .infinity)
+                .frame(height: 240)
+            } else {
+                VStack(spacing: 20) {
+                    ForEach(filteredItems) { item in
+                        NavigationLink {
+                            ReceiptDetailView(
+                                receiptDetailViewModel: ReceiptDetailViewModel(item: item)
+                            )
+                        } label: {
+                            ReceiptCard(item: item, showStatus: true)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
         }
     }
 }
@@ -153,7 +157,7 @@ extension ReceiptStatus {
             requestContent: "엔진오일 교체 및 점검",
             date: "2025-10-13",
             phoneNumber: "010-1234-5678",
-            manager: "송지은",
+            manager: "티파니 송",
             status: .inProgress
         ),
         ReceiptItem(
@@ -164,7 +168,7 @@ extension ReceiptStatus {
             requestContent: "브레이크 패드 교체",
             date: "2025-10-12",
             phoneNumber: "010-9876-5432",
-            manager: "송지은",
+            manager: "티파니 송",
             status: .inProgress
         ),
         ReceiptItem(
@@ -175,7 +179,7 @@ extension ReceiptStatus {
             requestContent: "냉각수 점검",
             date: "2025-10-10",
             phoneNumber: "010-2222-3333",
-            manager: "송지은",
+            manager: "티파니 송",
             status: .completed,
             leadTimeDays: 4,
             completionInfos: [
@@ -203,4 +207,3 @@ extension ReceiptStatus {
     ]
     return MyReceiptListView(receiptListViewModel: receiptListViewModel)
 }
-

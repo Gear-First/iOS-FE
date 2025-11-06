@@ -5,59 +5,59 @@ struct ReceiptCard: View {
     var showStatus: Bool = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            
-            // MARK: - 접수번호 (상단 타이틀)
+        VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text(item.id)
-                    .font(.title3)
-                    .foregroundColor(.primary)
-                    .fontWeight(.semibold)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(AppColor.mainTextBlack)
                 
                 if showStatus {
                     Spacer()
                     Text(item.status.rawValue)
-                        .font(.callout)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(statusColor(for: item.status).opacity(0.9))
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .cornerRadius(8)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(AppColor.surface)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(statusColor(for: item.status))
+                        .clipShape(Capsule())
                 }
             }
-            .padding(.bottom, 2)
+            
+            Text(item.requestContent)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(AppColor.textMuted)
             
             Divider()
-                .padding(.vertical, -4)
+                .overlay(AppColor.cardBorder)
             
-            // MARK: - 차량 정보 섹션
-            VStack(alignment: .leading, spacing: 8) {
-                infoRow(label: "차주", value: item.ownerName)
-                infoRow(label: "차량번호", value: item.carNumber)
-            }
+            infoGrid
             
             HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.carModel)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(AppColor.mainTextBlack)
+                    if let lead = item.leadTimeDays {
+                        Text("평균 \(lead)일 소요")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(AppColor.textMuted)
+                    }
+                }
+
                 Spacer()
                 Text(item.date)
-                    .font(.footnote)
-                    .foregroundColor(.gray)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(AppColor.textMuted)
             }
-            .padding(.top, 4)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .gfCardStyle()
     }
     
     private func statusColor(for status: ReceiptStatus) -> Color {
         switch status {
-        case .checkIn: return .blue
-        case .inProgress: return .orange
-        case .completed: return .green
+        case .checkIn: return AppColor.mainBlue
+        case .inProgress: return AppColor.mainYellow
+        case .completed: return AppColor.mainGreen
         }
     }
     
@@ -69,9 +69,18 @@ struct ReceiptCard: View {
                 .foregroundColor(.secondary)
             Spacer()
             Text(value)
-                .font(.system(size: 16))
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(AppColor.mainTextBlack)
+        }
+    }
+
+    private var infoGrid: some View {
+        VStack(spacing: 12) {
+            infoRow(label: "차주", value: item.ownerName)
+            infoRow(label: "차량번호", value: item.carNumber)
+            if let manager = item.manager {
+                infoRow(label: "담당자", value: manager)
+            }
         }
     }
 }

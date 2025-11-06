@@ -20,63 +20,50 @@ struct ReceiptCompletionView: View {
     }
     
     var body: some View {
-        VStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // MARK: - 카드 리스트
-                    ForEach(formVM.items) { item in
-                        RepairItemCard(
-                            form: item,
-                            title: "수리 항목",
-                            onRemove: {
-                                if formVM.items.count > 1 {
-                                    formVM.removeItem(item.id)
-                                }
-                            },
-                            onShowPartSearch: { part in
-                                selectedPart = part
-                            },
-                            onShowQuantityPicker: { part in
-                                selectedQuantityPart = part
-                                showQuantityPicker = true
-                            },
-                            onShowContent: true
-                        )
-                    }
-                    // MARK: - 수리 항목 추가 버튼
-                    Button {
-                        if formVM.canAddNewItem() {
-                            formVM.addItem()
-                        } else {
-                            showInvalidAlert = true
-                        }
-                    } label: {
-                        Label("수리 항목 추가", systemImage: "plus.circle.fill")
-                            .font(.headline)
-                            .foregroundColor(.blue)
-                    }
-                    .padding(.top, 8)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("수리 완료 입력")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(AppColor.mainTextBlack)
+                    Text("사용한 부품과 수리 내용을 확인하고 최종 완료 처리하세요.")
+                        .font(.system(size: 14))
+                        .foregroundColor(AppColor.textMuted)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
-            }
-            
-            // MARK: - 완료 제출 버튼
-            BaseButton(label: "완료 제출", backgroundColor: .green) {
-                if formVM.canAddNewItem() {
-                    showConfirm = true
-                } else {
-                    showInvalidAlert = true
+                
+                ForEach(formVM.items) { item in
+                    RepairItemCard(
+                        form: item,
+                        completeParts: formVM.completeParts,
+                        title: "수리 항목",
+                        onShowPartSearch: { part in
+                            selectedPart = part
+                        },
+                        onShowQuantityPicker: { part in
+                            selectedQuantityPart = part
+                            showQuantityPicker = true
+                        },
+                        showPartSection: true,
+                        onShowContent: true
+                    )
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 24)
         }
-        .background(Color(AppColor.bgGray).ignoresSafeArea())
-        .navigationTitle("수리 완료 입력")
-        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            Task {
+                await formVM.fetchCompleteParts(
+                    receiptNum: detailViewModel.item.id,
+                    vehicleNumber: detailViewModel.item.carNumber
+                )
+            }
+        }
+        .background(AppColor.background.ignoresSafeArea())
         .sheet(item: $selectedPart) { part in
-            PartSearchSheetView(viewModel: part)
+            // 이미 선택된 부품은 다시 선택 못하도록 막기
+            let disabledCodes = Set(formVM.items.flatMap { $0.parts }.map { $0.partCode.isEmpty ? $0.code : $0.partCode })
+            PartSearchSheetView(viewModel: part, disabledCodes: disabledCodes)
                 .presentationDetents([.height(420)])
         }
         .sheet(item: $selectedQuantityPart) { part in
@@ -96,18 +83,8 @@ struct ReceiptCompletionView: View {
                 
                 Spacer()
                 
-                Button {
-                    selectedQuantityPart = nil
-                } label: {
-                    Text("완료")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(12)
-                        .padding(.horizontal, 16)
-                }
+                Button("완료") { selectedQuantityPart = nil }
+
             }
             .frame(maxWidth: .infinity)
             .cornerRadius(20)
@@ -121,7 +98,7 @@ struct ReceiptCompletionView: View {
             Button("완료", role: .destructive) {
                 Task {
                     await formVM.submitRepairDetails(receiptId: detailViewModel.item.id, formVM: formVM)
-//                    await detailViewModel.fetchReceiptDetail(id: detailViewModel.item.id)
+                    //                    await detailViewModel.fetchReceiptDetail(id: detailViewModel.item.id)
                     DispatchQueue.main.async {
                         detailViewModel.item.status = .completed
                         dismiss()
@@ -132,6 +109,11 @@ struct ReceiptCompletionView: View {
         } message: {
             Text("제출 후에는 상태를 되돌릴 수 없습니다.")
         }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            bottomActionBar
+        }
+        .navigationTitle("수리 완료 입력")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -148,10 +130,28 @@ struct ReceiptCompletionView: View {
                     requestContent: "에어컨 고장 수리 요청",
                     date: "2025-10-13",
                     phoneNumber: "010-3456-7890",
-                    manager: "송지은",
+                    manager: "티파니 송",
                     status: .inProgress
                 )
             )
         )
+    }
+}
+
+private extension ReceiptCompletionView {
+    var bottomActionBar: some View {
+        VStack(spacing: 16) {
+            Divider().overlay(AppColor.cardBorder)
+            BaseButton(label: "완료 제출", backgroundColor: AppColor.mainGreen) {
+                if formVM.isCompletionValid() {
+                    showConfirm = true
+                } else {
+                    showInvalidAlert = true
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 14)
+        }
+        .background(AppColor.surface.ignoresSafeArea())
     }
 }

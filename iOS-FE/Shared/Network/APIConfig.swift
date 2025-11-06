@@ -12,4 +12,8 @@ enum APIConfig {
     enum Inventory {
         static let baseURL = "\(baseDomain)/inventory/api/v1"
     }
+    
+    enum Warehouse {
+        static let baseURL = "\(baseDomain)/warehouse/api/v1"
+    }
 }

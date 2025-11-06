@@ -14,6 +14,8 @@ struct ReceiptItem: Identifiable {
     var status: ReceiptStatus   // 상태
     var leadTimeDays: Int?      // 소요일(요청일~완료일 일수)
     
+    var orderId: Int?
+    
     // 상세 페이지에서 사용할 수리 완료 정보
     var completionInfos: [ReceiptDetailViewModel.CompletionInfo]? = nil
 

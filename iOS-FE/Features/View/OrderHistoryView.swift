@@ -1,87 +1,31 @@
 import SwiftUI
 
 struct OrderHistoryView: View {
-    @StateObject var historyViewModel = OrderHistoryViewModel()
+    @ObservedObject var historyViewModel: OrderHistoryViewModel
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 12) {
-                
-                // MARK: - 필터 버튼
-                HStack(spacing: 0) {
-                    ForEach(OrderHistoryViewModel.OrderFilter.allCases) { filter in
-                        let isSelected = historyViewModel.selectedFilter == filter
-                        Button {
-                            historyViewModel.selectedFilter = filter
-                        } label: {
-                            VStack(spacing: 4) {
-                                Text(filter.rawValue)
-                                    .font(.subheadline)
-                                    .foregroundColor(isSelected ? AppColor.mainBlack : AppColor.mainTextGray)
-                                    .frame(maxWidth: .infinity)
-                                Rectangle()
-                                    .fill(isSelected ? AppColor.mainBlack : Color.clear)
-                                    .frame(height: 2)
-                            }
-                        }
-                    }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    filterTabs
+                    GFSearchField(
+                        text: $historyViewModel.searchText,
+                        placeholder: "발주번호, 부품명 검색"
+                    )
+                    totalCount
+                    contentSection
                 }
-                .frame(height: 40)
-                .padding(.horizontal)
-                
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                    TextField("발주번호, 부품명 검색", text: $historyViewModel.searchText)
-                        .textInputAutocapitalization(.never)
-                        .disableAutocorrection(true)
-                }
-                .padding(10)
-                .background(Color.white)
-                .cornerRadius(8)
-                .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
-                .padding(.horizontal)
-                
-                HStack {
-                    Spacer()
-                    Text("총 \(historyViewModel.filteredOrders.count)건")
-                        .font(.subheadline)
-                        .foregroundColor(AppColor.mainTextGray)
-                        .padding(.trailing, 10)
-                }
-                .padding(.horizontal)
-                
-                // MARK: - 주문 리스트
-                if historyViewModel.filteredOrders.isEmpty {
-                    VStack {
-                        Spacer()
-                        Text("발주 내역이 없습니다.")
-                            .foregroundColor(AppColor.mainTextGray)
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity)
-                } else {
-                    ScrollView {
-                        VStack(spacing: 12) {
-                            ForEach(historyViewModel.filteredOrders, id: \.orderId) { order in
-                                NavigationLink(value: order) {
-                                    orderRow(order: order)
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                    .refreshable {
-                        await historyViewModel.refreshOrders(branchId: 2001, engineerId: 1001)
-                    }
-                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 24)
             }
-            .padding(.top, 12)
+            .refreshable {
+                await historyViewModel.refreshOrders(branchCode: "서울 대리점", engineerId: 10)
+            }
             .navigationTitle("발주 내역")
             .navigationBarTitleDisplayMode(.inline)
-            .background(AppColor.bgGray)
+            .background(AppColor.background.ignoresSafeArea())
             .task {
-                await historyViewModel.fetchAllOrders(branchId: 2001, engineerId: 1001)
+                await historyViewModel.fetchAllOrders(branchCode: "서울 대리점", engineerId: 10)
             }
             .navigationDestination(for: OrderHistoryItem.self) { order in
                 if let i = historyViewModel.orders.firstIndex(where: { $0.orderId == order.orderId }) {
@@ -89,10 +33,72 @@ struct OrderHistoryView: View {
                         Task {
                             await historyViewModel.cancelOrder(
                                 orderId: order.orderId,
-                                branchId: 2001,
-                                engineerId: 1001
+                                branchCode: "서울 대리점",
+                                engineerId: 10
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    private var filterTabs: some View {
+        HStack(spacing: 12) {
+            ForEach(OrderHistoryViewModel.OrderFilter.allCases) { filter in
+                let isSelected = historyViewModel.selectedFilter == filter
+                Button {
+                    withAnimation(.spring(duration: 0.25)) {
+                        historyViewModel.selectedFilter = filter
+                    }
+                } label: {
+                    Text(filter.rawValue)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(isSelected ? AppColor.surface : AppColor.textMuted)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(isSelected ? AppColor.mainBlue : AppColor.surface)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(isSelected ? AppColor.mainBlue.opacity(0.35) : AppColor.cardBorder, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var totalCount: some View {
+        Text("총 \(historyViewModel.filteredOrders.count)건")
+            .font(.system(size: 18, weight: .bold))
+            .foregroundColor(AppColor.mainTextBlack)
+    }
+
+    private var contentSection: some View {
+        Group {
+            if historyViewModel.isLoading {
+                ProgressView("불러오는 중...")
+                    .progressViewStyle(CircularProgressViewStyle(tint: AppColor.mainBlue))
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 40)
+            } else if historyViewModel.filteredOrders.isEmpty {
+                EmptyStateView(
+                    title: "발주 내역이 없습니다.",
+                    message: "필터를 조정하거나 새로고침하여 최신 데이터를 확인하세요.",
+                    systemImage: "doc.text.magnifyingglass"
+                )
+                .frame(maxWidth: .infinity)
+                .frame(height: 240)
+            } else {
+                VStack(spacing: 16) {
+                    ForEach(historyViewModel.filteredOrders, id: \.orderId) { order in
+                        NavigationLink(value: order) {
+                            orderRow(order: order)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -102,40 +108,37 @@ struct OrderHistoryView: View {
     @ViewBuilder
     private func orderRow(order: OrderHistoryItem) -> some View {
         let status = OrderStatusMapper.map(order.status)
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("발주번호: \(order.orderNumber)")
-                    .font(.headline)
-                    .foregroundColor(AppColor.mainBlack)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(AppColor.mainTextBlack)
                 Spacer()
                 Text(status.rawValue)
-                    .font(.caption)
-                    .foregroundColor(AppColor.mainWhite)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(AppColor.surface)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                     .background(status.badgeColor)
-                    .cornerRadius(6)
+                    .clipShape(Capsule())
             }
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 ForEach(order.items) { item in
-                    Text("\(item.inventoryName) (\(item.quantity)개)")
-                        .font(.subheadline)
-                        .foregroundColor(AppColor.mainBlack)
+                    Text("\(item.partName) (\(item.quantity)개)")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(AppColor.mainTextBlack)
                 }
             }
             
             HStack {
                 Text("요청일: \(formatDate(order.requestDate))")
-                    .font(.caption)
-                    .foregroundColor(AppColor.mainTextGray)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(AppColor.textMuted)
                 Spacer()
             }
         }
-        .padding()
-        .background(AppColor.mainWhite)
-        .cornerRadius(12)
-        .shadow(color: AppColor.mainBlack.opacity(0.05), radius: 4, x: 0, y: 2)
+        .gfCardStyle()
     }
     
     private func formatDate(_ raw: String?) -> String {
