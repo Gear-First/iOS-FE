@@ -39,19 +39,20 @@ final class OrderHistoryViewModel: ObservableObject {
                 guard !searchText.isEmpty else { return true }
                 let searchLower = searchText.lowercased()
                 // 발주번호 또는 부품명 중 하나라도 포함되면 true
-                return order.orderNumber.lowercased().contains(searchLower) ||
-                order.items.contains { $0.inventoryName.lowercased().contains(searchLower) }
+                return (order.orderNumber ?? "").lowercased().contains(searchLower) ||
+                       order.items.contains { $0.partName.lowercased().contains(searchLower) }
+
             }
     }
     
     // MARK: - 서버에서 전체 주문 불러오기 (초기 로딩)
-    func fetchAllOrders(branchId: Int, engineerId: Int) async {
+    func fetchAllOrders(branchCode: String, engineerId: Int) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         
         do {
-            let ordersFromServer = try await PurchaseOrderAPI.fetchOrderAllStatus(branchId: branchId, engineerId: engineerId)
+            let ordersFromServer = try await PurchaseOrderAPI.fetchOrderAllStatus(branchCode: branchCode, engineerId: engineerId)
             self.orders = ordersFromServer
         } catch {
             errorMessage = error.localizedDescription
@@ -60,8 +61,8 @@ final class OrderHistoryViewModel: ObservableObject {
     }
     
     // MARK: - 새로고침: 전체 데이터 다시 가져오기
-    func refreshOrders(branchId: Int, engineerId: Int) async {
-        await fetchAllOrders(branchId: branchId, engineerId: engineerId)
+    func refreshOrders(branchCode: String, engineerId: Int) async {
+        await fetchAllOrders(branchCode: branchCode, engineerId: engineerId)
     }
     
     // MARK: - 주문 상태 변경 (Mock)
@@ -78,7 +79,7 @@ final class OrderHistoryViewModel: ObservableObject {
     }
     
     // MARK: - 취소 (업데이트 + 실패 시 롤백)
-    func cancelOrder(orderId: Int, branchId: Int, engineerId: Int) async {
+    func cancelOrder(orderId: Int, branchCode: String, engineerId: Int) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -86,7 +87,7 @@ final class OrderHistoryViewModel: ObservableObject {
         do {
             let res = try await PurchaseOrderAPI.cancelOrder(
                 orderId: orderId,
-                branchId: branchId,
+                branchCode: branchCode,
                 engineerId: engineerId
             )
             

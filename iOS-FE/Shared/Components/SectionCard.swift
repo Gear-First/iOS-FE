@@ -19,8 +19,8 @@ struct SectionCard<Content: View, Trailing: View>: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text(title)
-                    .font(.headline)
-                    .foregroundColor(AppColor.mainBlack)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(AppColor.mainTextBlack)
                 Spacer()
                 if let trailing = trailing {
                     trailing
@@ -28,10 +28,7 @@ struct SectionCard<Content: View, Trailing: View>: View {
             }
             content
         }
-        .padding()
-        .background(AppColor.mainWhite)
-        .cornerRadius(12)
-        .shadow(color: AppColor.mainBlack.opacity(0.05), radius: 4, x: 0, y: 1)
+        .gfCardStyle(cornerRadius: 18, padding: 20)
     }
 }
 

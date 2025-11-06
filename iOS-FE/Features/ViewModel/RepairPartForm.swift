@@ -6,7 +6,8 @@ final class RepairPartForm: ObservableObject, Identifiable, PartSelectable {
     // 서버로 보낼 필드
     @Published var partId: Int? = nil
     @Published var partName: String = ""
-    @Published var quantity: Int = 0
+    @Published var partCode: String = ""  // 부품 코드 (문자열)
+    @Published var quantity: Int = 1
     
     // UI 전용 필드
     @Published var unitPrice: Double = 0.0 
@@ -20,14 +21,17 @@ final class RepairPartForm: ObservableObject, Identifiable, PartSelectable {
         set { partName = newValue }
     }
     var code: String {
-            get { String(partId ?? 0) }
-            set {
-                // code가 string이라면 id를 더미 int로 변환
-                if let intValue = Int(newValue) {
-                    partId = intValue
-                } else {
-                    partId = Int.random(in: 100...999)
-                }
+        get { partCode.isEmpty ? String(partId ?? 0) : partCode }
+        set {
+            // code가 숫자 문자열이면 partId로 설정, 아니면 partCode로 설정
+            if let intValue = Int(newValue) {
+                partId = intValue
+                // 숫자 문자열이지만 partCode도 함께 저장
+                partCode = newValue
+            } else {
+                // 문자열 코드인 경우 partCode로 저장하고 partId는 nil 유지
+                partCode = newValue
             }
         }
+    }
 }

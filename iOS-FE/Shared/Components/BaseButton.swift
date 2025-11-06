@@ -9,14 +9,17 @@ struct BaseButton: View {
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.headline)
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(textColor)
                 .frame(maxWidth: .infinity)
-                .padding()
-                .background(backgroundColor)
-                .cornerRadius(10)
-                .shadow(color: AppColor.mainBlack.opacity(0.1), radius: 4, x: 0, y: 2)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(backgroundColor)
+                )
+                .shadow(color: backgroundColor.opacity(0.3), radius: 14, x: 0, y: 6)
         }
+        .buttonStyle(.plain)
     }
 }
 

@@ -57,6 +57,34 @@ enum ReceiptAPI {
         )
         return response.data.toReceiptItem()
     }
+    
+    // MARK: - 발주 상세
+    static func fetchCompleteParts(receiptNum: String, vehicleNumber: String, branchCode: String = "서울 대리점", engineerId: Int = 10) async throws -> [OrderItem] {
+        let encodedVehicle = vehicleNumber.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? vehicleNumber
+        let url = "\(APIConfig.Order.baseURL)/purchase-orders/repair/parts/\(receiptNum)/\(encodedVehicle)?branchCode=\(branchCode)&engineerId=\(engineerId)"
+
+        // 서버는 빈 바디를 기대할 수 있으므로 빈 Data()로 POST 해 본다.
+        let response: CompletePartsResponse = try await NetworkManager.shared.request(
+            url: url,
+            method: "GET"
+        )
+
+        let data = response.data
+        return data.items.compactMap { dto in
+            guard let code = dto.partCode,
+                  let name = dto.partName,
+                  let qty = dto.quantity
+            else { return nil }
+            return OrderItem(
+                partCode: code,
+                partName: name,
+                quantity: qty,
+                price: dto.price ?? 0,
+                id: "\(data.orderId)-\(code)",
+                orderStatus: OrderStatus(rawValue: data.orderStatus ?? "") ?? .PENDING
+            )
+        }
+    }
 }
 
 // MARK: - 서버에서 응답이 단순 성공/실패일 때 사용

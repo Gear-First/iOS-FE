@@ -8,61 +8,82 @@ struct EditableField<T: LosslessStringConvertible>: View {
     var action: (() -> Void)? = nil
     
     var body: some View {
-        if isEditable {
-            ZStack(alignment: .leading) {
-                // 실제 입력 필드
-                TextField(
-                    "",
-                    text: Binding(
-                        get: {
-                            if let doubleValue = value as? Double {
-                                // 항상 소수점 둘째 자리까지 표시
-                                return String(format: "%.2f", doubleValue)
-                            } else {
-                                return String(describing: value)
-                            }
-                        },
-                        set: { newValue in
-                            if let converted = T(newValue), !newValue.isEmpty {
-                                value = converted
-                            } else if newValue.isEmpty {
-                                // 값 지웠을 때 빈값 처리 (String은 "" / Int는 0 등)
-                                if let emptyValue = T("") {
-                                    value = emptyValue
-                                }
-                            }
-                        }
-                    )
-                )
-                .focused($isFocused)
-                .keyboardType(T.self == Int.self ? .numberPad : .default)
-                .padding()
-                .background(AppColor.mainWhite)
-                .cornerRadius(10)
-                .shadow(color: AppColor.mainBlack.opacity(0.05), radius: 3, x: 0, y: 1)
-                
-                // placeholder
-                if String(describing: value).isEmpty && !isFocused {
-                    Text(placeholder)
-                        .foregroundColor(AppColor.mainTextGray)
-                        .padding()
-                }
-            }
-        } else {
-            Button(action: { action?() }) {
-                HStack {
-                    Text(String(describing: value).isEmpty ? placeholder : String(describing: value))
-                        .foregroundColor(String(describing: value).isEmpty ? AppColor.mainTextGray : .black)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(AppColor.mainTextGray)
-                }
-                .padding()
-                .background(AppColor.mainWhite)
-                .cornerRadius(10)
-                .shadow(color: AppColor.mainBlack.opacity(0.05), radius: 3, x: 0, y: 1)
+        Group {
+            if isEditable {
+                editableField
+            } else {
+                selectionField
             }
         }
+    }
+
+    // MARK: - Editable Mode
+    private var editableField: some View {
+        ZStack(alignment: .leading) {
+            TextField(
+                "",
+                text: Binding(
+                    get: {
+                        if let doubleValue = value as? Double {
+                            return String(format: "%.2f", doubleValue)
+                        } else {
+                            return String(describing: value)
+                        }
+                    },
+                    set: { newValue in
+                        if let converted = T(newValue), !newValue.isEmpty {
+                            value = converted
+                        } else if newValue.isEmpty, let emptyValue = T("") {
+                            value = emptyValue
+                        }
+                    }
+                )
+            )
+            .focused($isFocused)
+            .keyboardType(T.self == Int.self ? .numberPad : .default)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(AppColor.surface)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(isFocused ? AppColor.mainBlue : AppColor.cardBorder, lineWidth: 1)
+            )
+            .shadow(color: AppColor.cardShadow, radius: isFocused ? 12 : 6, x: 0, y: 4)
+            
+            if String(describing: value).isEmpty && !isFocused {
+                Text(placeholder)
+                    .foregroundColor(AppColor.textMuted)
+                    .padding(.horizontal, 16)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    // MARK: - Selection Mode
+    private var selectionField: some View {
+        Button(action: { action?() }) {
+            HStack {
+                Text(displayText)
+                    .foregroundColor(displayText.isEmpty ? AppColor.textMuted : AppColor.mainTextBlack)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .foregroundColor(AppColor.textMuted)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(AppColor.surface)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(AppColor.cardBorder, lineWidth: 1)
+            )
+            .shadow(color: AppColor.cardShadow, radius: 8, x: 0, y: 4)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var displayText: String {
+        let text = String(describing: value)
+        return text == "0" ? "" : text
     }
 }
 

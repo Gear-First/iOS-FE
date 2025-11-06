@@ -19,58 +19,43 @@ struct DetailInfoSection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // MARK: - Header
+        VStack(alignment: .leading, spacing: 18) {
             HStack {
                 Text(title)
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundColor(AppColor.mainBlack)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(AppColor.mainTextBlack)
                 Spacer()
                 if let statusText, let statusColor {
                     Text(statusText)
-                        .font(.callout)
-                        .fontWeight(.semibold)
-                        .foregroundColor(AppColor.mainWhite)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(statusColor.opacity(0.9))
-                        .foregroundColor(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .shadow(color: statusColor.opacity(0.3), radius: 2, x: 0, y: 1)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(AppColor.surface)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(statusColor)
+                        .clipShape(Capsule())
+                        .shadow(color: statusColor.opacity(0.3), radius: 6, x: 0, y: 4)
                 }
             }
 
-            Divider().padding(.bottom, 4)
-
-            // MARK: - Rows
-            VStack(spacing: 6) {
+            VStack(spacing: 14) {
                 ForEach(rows, id: \.title) { row in
-                    HStack(alignment: .firstTextBaseline) {
+                    HStack(alignment: .top, spacing: 12) {
                         Text(row.title)
-                            .font(.body)
-                            .foregroundColor(AppColor.mainTextGray)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(AppColor.textMuted)
                             .frame(width: 90, alignment: .leading)
 
                         Spacer()
 
                         Text(row.value)
-                            .font(.body)
-                            .foregroundColor(AppColor.mainBlack)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(AppColor.mainTextBlack)
                             .multilineTextAlignment(.trailing)
                     }
-                    Divider()
-                        .padding(.top, 4)
-                        .opacity(row.title == rows.last?.title ? 0 : 0.15)
                 }
             }
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Color.white)
-                .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 1)
-        )
+        .gfCardStyle(cornerRadius: 22, padding: 24)
     }
 }
 

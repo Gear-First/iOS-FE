@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 
+// MARK: - 주문 상태 Enum
 enum OrderStatus: String, Codable, CaseIterable, Identifiable {
     case PENDING = "승인 대기"
     case APPROVED = "승인 완료"
@@ -37,12 +38,13 @@ enum OrderStatus: String, Codable, CaseIterable, Identifiable {
 
 // MARK: - 로컬 주문 항목 (UI/로컬 상태용)
 struct OrderItem: Identifiable, Codable, Hashable {
-    let id: String            // 로컬 고유 ID
-    let _id: String?          // 서버에서 받은 ID 등 (없을 수 있음)
+    let id: String
+    let _id: String?      // 서버 ID 등
 
-    let inventoryCode: String
-    let inventoryName: String
+    let partCode: String
+    let partName: String
     let quantity: Int
+    var price: Double
 
     var requestDate: String?
     var approvalDate: String?
@@ -52,9 +54,10 @@ struct OrderItem: Identifiable, Codable, Hashable {
     var orderStatus: OrderStatus
 
     init(
-        inventoryCode: String,
-        inventoryName: String,
+        partCode: String,
+        partName: String,
         quantity: Int,
+        price: Double? = nil,
         requestDate: String? = nil,
         approvalDate: String? = nil,
         deliveryStartDate: String? = nil,
@@ -63,9 +66,10 @@ struct OrderItem: Identifiable, Codable, Hashable {
         serverId: String? = nil,
         orderStatus: OrderStatus = .PENDING
     ) {
-        self.inventoryCode = inventoryCode
-        self.inventoryName = inventoryName
+        self.partCode = partCode
+        self.partName = partName
         self.quantity = quantity
+        self.price = price ?? 0
         self.requestDate = requestDate
         self.approvalDate = approvalDate
         self.deliveryStartDate = deliveryStartDate
@@ -81,7 +85,7 @@ struct VehicleResponse: Codable {
     let status: Int
     let success: Bool
     let message: String
-    let data: [ReceiptVehicle]     // 접수 차량 리스트
+    let data: [ReceiptVehicle]
 }
 
 struct Vehicle: Codable, Identifiable {
@@ -94,126 +98,158 @@ struct Vehicle: Codable, Identifiable {
     var id: String { repairNumber }
 }
 
-/// 접수 차량(간단형) DTO
 struct ReceiptVehicle: Codable, Identifiable {
     let carNum: String
     let carType: String
     var id: String { carNum }
 }
 
-// MARK: - 부품 관련 (DTO ↔ 도메인 매핑)
-
-// 서버 응답 래퍼
+// MARK: - 부품 관련
 struct PartResponse: Decodable {
     let status: Int
     let success: Bool
     let message: String
-    let data: [PartDTO]
+    let data: PartData
 }
 
-// 서버 DTO
+struct PartData: Decodable {
+    let items: [PartDTO]
+    let page: Int
+    let size: Int
+    let total: Int
+}
+
 struct PartDTO: Decodable {
     let id: Int
-    let partName: String
-    let partCode: String
+    let code: String
+    let name: String
+    let category: CategoryDTO
 }
 
-// 도메인(화면)에서 사용할 모델
+struct CategoryDTO: Decodable {
+    let id: Int
+    let name: String
+}
+
 struct PartItem: Identifiable, Hashable, Codable {
-    var id: String          // 문자열 통일
+    var id: String
     var partName: String
     var partCode: String
+    var categoryName: String
 }
 
 extension PartItem {
     init(dto: PartDTO) {
         self.id = String(dto.id)
-        self.partName = dto.partName
-        self.partCode = dto.partCode
+        self.partName = dto.name
+        self.partCode = dto.code
+        self.categoryName = dto.category.name
     }
 }
 
-// MARK: - 주문: 요청용 DTO (서버로 전송)
-
-// 최종 요청 바디
+// MARK: - 주문 생성 요청 DTO
 struct OrderCreateRequest: Encodable {
-    let vehicleNumber: String      // 예: "12가3456"
-    let vehicleModel: String       // 예: "Sonata"
-    let engineerId: Int            // 필요 없으면 서버 계약에 맞춰 제거 가능
-    let branchId: Int              // 필요 없으면 제거 가능
+    let vehicleNumber: String?
+    let vehicleModel: String?
+    let requesterId: Int
+    let requesterName: String
+    let requesterRole: String
+    let requesterCode: String
+    let receiptNum: String
     let items: [OrderItemDTO]
 }
 
-// 항목 요청 DTO (요청용)
 struct OrderItemDTO: Encodable {
-    let inventoryId: Int?          // 서버가 꼭 요구하면 채워서 전달, 아니면 nil
-    let inventoryName: String
-    let inventoryCode: String
+    let partId: Int
+    let partName: String
+    let partCode: String
+    let price: Double
     let quantity: Int
-    // let price: Double?          // 서버 계약에 따라 사용
 
-    init(inventoryId: Int? = nil, inventoryName: String, inventoryCode: String, quantity: Int) {
-        self.inventoryId = inventoryId
-        self.inventoryName = inventoryName
-        self.inventoryCode = inventoryCode
+    init(partId: Int, partName: String, partCode: String, price: Double, quantity: Int) {
+        self.partId = partId
+        self.partName = partName
+        self.partCode = partCode
+        self.price = price
         self.quantity = quantity
     }
-}
 
-extension OrderItemDTO {
-    /// PartItem + 수량 → 요청 DTO
-    init(part: PartItem, quantity: Int, inventoryId: Int? = nil) {
+    init(orderItem: OrderItem, partId: Int) {
         self.init(
-            inventoryId: inventoryId,
-            inventoryName: part.partName,
-            inventoryCode: part.partCode,
-            quantity: quantity
-        )
-    }
-
-    /// OrderItem → 요청 DTO
-    init(orderItem: OrderItem, inventoryId: Int? = nil) {
-        self.init(
-            inventoryId: inventoryId,
-            inventoryName: orderItem.inventoryName,
-            inventoryCode: orderItem.inventoryCode,
+            partId: partId,
+            partName: orderItem.partName,
+            partCode: orderItem.partCode,
+            price: orderItem.price,
             quantity: orderItem.quantity
         )
     }
+
+    init(part: PartItem, quantity: Int, price: Double = 0, partId: Int? = nil) {
+        self.init(
+            partId: partId ?? Int(part.partCode) ?? 0,
+            partName: part.partName,
+            partCode: part.partCode,
+            price: price,
+            quantity: quantity
+        )
+    }
 }
 
-// MARK: - 주문: 응답/조회용 DTO (서버에서 수신)
-struct OrderResponse: Codable {
-    let success: Bool
-    let message: String
-}
-
-struct OrderStatusResponse: Codable {
+// MARK: - 주문 생성 응답
+struct OrderCreateResponse: Decodable {
     let status: Int
     let success: Bool
     let message: String
-    let data: [OrderStatusItem]
+    let data: OrderCreateData
 }
 
-struct OrderStatusItem: Codable, Identifiable {
-    let repairNumber: String
-    var status: String
-    let items: [OrderStatusPart]
-    var id: String { repairNumber }
+struct OrderCreateData: Decodable {
+    let orderId: Int
+    let orderNumber: String
+    let totalQuantity: Int
+    let orderStatus: String
+    let items: [OrderCreateItem]
 }
 
-struct OrderStatusPart: Codable, Identifiable {
-    let inventoryId: Int
-    let name: String
+struct OrderCreateItem: Decodable {
+    let id: Int
+    let partName: String
+    let partCode: String
+    let price: Double
     let quantity: Int
-    var id: Int { inventoryId }
+    let totalPrice: Double
 }
 
+// MARK: - 공용 메시지
+struct MessageResponse: Decodable {
+    let status: Int
+    let success: Bool
+    let message: String
+}
+
+// MARK: - 주문 조회 관련 DTO
 struct OrderHistoryResponse: Decodable {
     let status: Int
     let success: Bool
     let message: String
-    let data: [OrderHistoryItem]
+    let data: OrderHistoryPage
+}
+
+struct OrderHistoryPage: Decodable {
+    let content: [OrderHistoryItem]
+    let pageNumber: Int?
+    let pageSize: Int?
+    let totalElements: Int?
+    let totalPages: Int?
+    let last: Bool?
+    let sort: [String]?
+}
+
+struct OrderDetailResponse: Decodable {
+    let status: Int
+    let success: Bool
+    let message: String
+    let data: OrderHistoryItem
 }
 
 struct OrderHistoryItem: Decodable, Hashable {
@@ -221,7 +257,7 @@ struct OrderHistoryItem: Decodable, Hashable {
     let orderNumber: String
     var status: String
     let totalPrice: Double
-    let requestDate: String
+    let requestDate: String?
     let approvedDate: String?
     let transferDate: String?
     let completedDate: String?
@@ -230,37 +266,70 @@ struct OrderHistoryItem: Decodable, Hashable {
 
 struct OrderHistoryPart: Identifiable, Decodable, Hashable {
     let id: Int
-    let inventoryName: String
-    let inventoryCode: String
+    let partName: String
+    let partCode: String
     let price: Double
     let quantity: Int
 }
 
-// 공용 메시지 응답
-struct MessageResponse: Decodable {
-    let status: Int
-    let success: Bool
-    let message: String
-}
-
-// MARK: - ViewModel 보조: 요청 바디 생성기 예시
+// MARK: - ViewModel 확장 (요청 바디 생성)
 extension OrderRequestViewModel {
-    /// 선택 차량 + 화면의 주문 항목으로 서버 요청 바디 생성
     func makeCreateRequest(
         items: [OrderItem],
-        engineerId: Int,
-        branchId: Int
+        requesterId: Int,
+        requesterName: String,
+        requesterRole: String,
+        requesterCode: String,
+        receiptNum: String
     ) -> OrderCreateRequest? {
         guard let v = selectedVehicle else { return nil }
 
-        let itemDTOs = items.map { OrderItemDTO(orderItem: $0, inventoryId: nil) }
+        let itemDTOs = items.map { orderItem -> OrderItemDTO in
+            let numericId = Int(orderItem._id ?? "") ?? 0
+            return OrderItemDTO(
+                partId: numericId,
+                partName: orderItem.partName,
+                partCode: orderItem.partCode,
+                price: orderItem.price,
+                quantity: orderItem.quantity
+            )
+        }
 
         return OrderCreateRequest(
-            vehicleNumber: v.carNum,  // ReceiptVehicle을 도메인 Vehicle로 변환해서 쓰는 경우에 맞춤
+            vehicleNumber: v.carNum,
             vehicleModel: v.carType,
-            engineerId: engineerId,
-            branchId: branchId,
+            requesterId: requesterId,
+            requesterName: requesterName,
+            requesterRole: requesterRole,
+            requesterCode: requesterCode,
+            receiptNum: receiptNum,
             items: itemDTOs
         )
     }
 }
+
+// MARK: - 발주 상세 조회 DTO
+struct CompletePartsResponse: Decodable {
+    let status: Int
+    let success: Bool
+    let message: String
+    let data: CompletePartsData
+}
+
+struct CompletePartsData: Decodable {
+    let orderId: Int
+    let orderNumber: String
+    let totalQuantity: Int?
+    let orderStatus: String?
+    let items: [CompletePartDTO]
+}
+
+struct CompletePartDTO: Decodable {
+    let id: Int?
+    let partName: String?
+    let partCode: String?
+    let price: Double?
+    let quantity: Int?
+    let totalPrice: Double?
+}
+

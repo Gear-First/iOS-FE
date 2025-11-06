@@ -3,6 +3,9 @@ import Foundation
 final class ReceiptCompletionViewModel: ObservableObject {
     @Published var items: [RepairItemForm] = [RepairItemForm()]
     
+    // API에서 가져온 관련 발주 부품
+        @Published var completeParts: [OrderItem] = []
+    
     init() {
         if items.isEmpty {
             let first = RepairItemForm()
@@ -32,20 +35,16 @@ final class ReceiptCompletionViewModel: ObservableObject {
     }
     
     // MARK: - 항목 유효성 검사
-    func canAddNewItem() -> Bool {
-        for form in items {
-            // 수리 내용 & 원인은 필수
-            if form.description.trimmingCharacters(in: .whitespaces).isEmpty ||
-                form.cause.trimmingCharacters(in: .whitespaces).isEmpty {
-                return false
+    func isCompletionValid() -> Bool {
+            for form in items {
+                // 수리 내용 & 원인은 필수
+                if form.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                    form.cause.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    return false
+                }
             }
-            // 부품 리스트 중 하나라도 이름이 비어있으면 안 됨
-            if form.parts.contains(where: { $0.partName.trimmingCharacters(in: .whitespaces).isEmpty }) {
-                return false
-            }
+            return true
         }
-        return true
-    }
     
     // MARK: - 수리 요청 데이터 구성
     func buildRepairRequest(receiptId: String) -> RepairRequest {
@@ -89,5 +88,22 @@ final class ReceiptCompletionViewModel: ObservableObject {
                 print("수리 상세 등록 실패:", error)
             }
         }
+    
+    // receiptId, 차량번호, 지점, 엔지니어 아이디로 부품 조회
+       func fetchCompleteParts(receiptNum: String, vehicleNumber: String, branchCode: String = "서울 대리점", engineerId: Int = 10) async {
+           do {
+               let parts = try await ReceiptAPI.fetchCompleteParts(
+                   receiptNum: receiptNum,
+                   vehicleNumber: vehicleNumber,
+                   branchCode: branchCode,
+                   engineerId: engineerId
+               )
+               DispatchQueue.main.async {
+                   self.completeParts = parts
+               }
+           } catch {
+               print("발주 부품 조회 실패:", error)
+           }
+       }
 }
 

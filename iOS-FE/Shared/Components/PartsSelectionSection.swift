@@ -68,6 +68,13 @@ struct PartSelectionSection: View {
     var onShowPartSearch: ((RepairPartForm) -> Void)?
     var onShowQuantityPicker: ((RepairPartForm) -> Void)?
     
+    private var canAddNextPart: Bool {
+        // 마지막 행이 유효하게 선택(이름/코드)되면 바로 추가 가능. 수량은 신경 쓰지 않음
+        guard let last = parts.last else { return false }
+        return !last.partName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+               last.partId != nil
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             ForEach(parts) { part in
@@ -86,20 +93,56 @@ struct PartSelectionSection: View {
                         }
                     } : nil
                 )
-                Divider().opacity(0.1)
+                Divider().overlay(AppColor.cardBorder.opacity(0.6))
             }
             
-            Button {
-                withAnimation {
-                    parts.append(RepairPartForm())
+            // 마지막 part를 직접 관찰하는 뷰
+            if let lastPart = parts.last {
+                AddButtonView(
+                    part: lastPart,
+                    onAdd: {
+                        withAnimation {
+                            parts.append(RepairPartForm())
+                        }
+                    }
+                )
+            } else {
+                Button {
+                    withAnimation {
+                        parts.append(RepairPartForm())
+                    }
+                } label: {
+                    Label("부품 추가", systemImage: "plus.circle.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(AppColor.textMuted)
                 }
-            } label: {
-                Label("부품 추가", systemImage: "plus.circle.fill")
-                    .font(.subheadline)
-                    .foregroundColor(AppColor.mainBlue)
+                .disabled(true)
+                .padding(.top, 4)
             }
-            .padding(.top, 4)
         }
+    }
+}
+
+// 부품 추가 버튼을 별도 뷰로 분리하여 마지막 part의 변경을 직접 관찰
+private struct AddButtonView: View {
+    @ObservedObject var part: RepairPartForm
+    let onAdd: () -> Void
+    
+    private var canAdd: Bool {
+        !part.partName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        part.partId != nil
+    }
+    
+    var body: some View {
+        Button {
+            onAdd()
+        } label: {
+            Label("부품 추가", systemImage: "plus.circle.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(canAdd ? AppColor.mainBlue : AppColor.textMuted)
+        }
+        .disabled(!canAdd)
+        .padding(.top, 4)
     }
 }
 
@@ -130,4 +173,3 @@ struct PartSelectionSection: View {
     )
     .padding()
 }
-

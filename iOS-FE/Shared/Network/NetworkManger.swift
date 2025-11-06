@@ -18,13 +18,14 @@ final class NetworkManager {
         
         if let body = body {
             if let stringBody = body as? String {
-                // text/plain 처리
                 request.setValue("text/plain", forHTTPHeaderField: "Content-Type")
                 request.httpBody = stringBody.data(using: .utf8)
             } else if let jsonBody = body as? [String: Any] {
-                // JSON 처리
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                 request.httpBody = try JSONSerialization.data(withJSONObject: jsonBody)
+            } else if let dataBody = body as? Data {
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                request.httpBody = dataBody
             } else {
                 throw NSError(
                     domain: "NetworkManager",
@@ -38,13 +39,11 @@ final class NetworkManager {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
-        // 응답 상태 체크
+        
         guard (200...299).contains(httpResponse.statusCode) else {
-            let responseText = String(data: data, encoding: .utf8) ?? "no response body"
-            print("Network Error \(url)\nStatus: \(httpResponse.statusCode)\nResponse: \(responseText)")
             throw URLError(.badServerResponse)
         }
-        // EmptyResponse 대응
+        
         if T.self == EmptyResponse.self, data.isEmpty {
             return EmptyResponse(success: true, message: nil) as! T
         }
