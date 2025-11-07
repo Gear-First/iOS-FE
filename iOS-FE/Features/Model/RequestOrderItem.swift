@@ -147,6 +147,33 @@ extension PartItem {
     }
 }
 
+struct IntegratedPartResponse: Decodable {
+    let status: Int
+    let success: Bool
+    let message: String
+    let data: IntegratedPartData
+}
+
+struct IntegratedPartData: Decodable {
+    let items: [IntegratedPartDTO]
+    let page: Int
+    let size: Int
+    let total: Int
+}
+
+struct IntegratedPartDTO: Decodable {
+    let id: Int
+    let code: String
+    let name: String
+    let price: Double?
+    let imageUrl: String?
+    let safetyStockQty: Int?
+    let enabled: Bool?
+    let categoryId: Int?
+    let categoryName: String?
+    let carModelNames: [String]?
+}
+
 // MARK: - 주문 생성 요청 DTO
 struct OrderCreateRequest: Encodable {
     let vehicleNumber: String?

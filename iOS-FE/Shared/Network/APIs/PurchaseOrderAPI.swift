@@ -19,6 +19,40 @@ enum PurchaseOrderAPI {
         return response.data.items.map(PartItem.init(dto:))
     }
     
+    // 통합 부품 검색 (차종 또는 카테고리 필터 지원)
+    static func fetchIntegratedParts(
+        carModelName: String? = nil,
+        categoryName: String? = nil
+    ) async throws -> [PartItem] {
+        var queryItems: [String] = []
+        
+        if let carModelName, !carModelName.isEmpty {
+            let encodedModel = carModelName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            queryItems.append("carModelName=\(encodedModel)")
+        }
+        
+        if let categoryName, !categoryName.isEmpty {
+            let encodedCategory = categoryName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            queryItems.append("categoryName=\(encodedCategory)")
+        }
+        
+        // 기본 URL + 쿼리 결합
+        let query = queryItems.joined(separator: "&")
+        let url = "\(APIConfig.Warehouse.baseURL)/parts/integrated?\(query)"
+        print("통합검색 URL:", url)
+        
+        let response: IntegratedPartResponse = try await NetworkManager.shared.request(url: url)
+        return response.data.items.map { dto in
+            PartItem(
+                id: String(dto.id),
+                partName: dto.name,
+                partCode: dto.code,
+                categoryName: dto.categoryName ?? "-"
+            )
+        }
+    }
+
+    
     // 발주 생성
     static func createOrder(order: OrderCreateRequest) async throws -> OrderCreateResponse {
         let url = "\(baseURL)/purchase-orders"
