@@ -62,9 +62,15 @@ struct ReceiptCompletionView: View {
         .background(AppColor.background.ignoresSafeArea())
         .sheet(item: $selectedPart) { part in
             // 이미 선택된 부품은 다시 선택 못하도록 막기
-            let disabledCodes = Set(formVM.items.flatMap { $0.parts }.map { $0.partCode.isEmpty ? $0.code : $0.partCode })
-            PartSearchSheetView(viewModel: part, disabledCodes: disabledCodes)
-                .presentationDetents([.height(420)])
+            let disabledCodes = Set(formVM.items.flatMap { $0.parts }
+                .map { $0.partCode.isEmpty ? $0.code : $0.partCode })
+            
+            PartSearchSheetView(
+                viewModel: part,
+                disabledCodes: disabledCodes,
+                categoryName: "소모품"
+            )
+            .presentationDetents([.large])
         }
         .sheet(item: $selectedQuantityPart) { part in
             VStack {
@@ -84,12 +90,13 @@ struct ReceiptCompletionView: View {
                 Spacer()
                 
                 Button("완료") { selectedQuantityPart = nil }
-
+                
             }
             .frame(maxWidth: .infinity)
             .cornerRadius(20)
             .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
             .presentationDetents([.height(350)])
+            .background(AppColor.background.ignoresSafeArea())
         }
         .alert("입력 값을 확인해주세요.", isPresented: $showInvalidAlert) {
             Button("확인", role: .cancel) {}

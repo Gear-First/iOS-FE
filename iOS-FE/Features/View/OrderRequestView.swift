@@ -76,7 +76,6 @@ struct OrderRequestView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 24)
         }
-        .background(AppColor.background.ignoresSafeArea())
         .navigationTitle("부품 요청")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) { bottomButtonSection }
@@ -84,10 +83,14 @@ struct OrderRequestView: View {
         .sheet(isPresented: $showCarSearch) { CarSearchSheetView(viewModel: viewModel) }
         .sheet(item: $selectedPart) { part in
             let disabledCodes = Set(formVM.items.flatMap { $0.parts }.map { $0.partCode.isEmpty ? $0.code : $0.partCode })
-            PartSearchSheetView(viewModel: part, disabledCodes: disabledCodes)
-                .presentationDetents([.height(420)])
+            PartSearchSheetView(viewModel: part,
+                                disabledCodes: disabledCodes,
+                                carModelName: isFromReceipt ? (viewModel.selectedVehicle?.carType ?? "") : nil)
+                .presentationDetents([.large])
         }
-        .sheet(item: $selectedQuantityPart) { quantityPickerSheet(part: $0) }
+        .sheet(item: $selectedQuantityPart) { quantityPickerSheet(part: $0)
+            .presentationBackground(AppColor.background) }
+        .background(AppColor.background.ignoresSafeArea())
         .alert("입력값을 확인해주세요.", isPresented: $showInvalidAlert) {
             Button("확인", role: .cancel) { }
         }
@@ -140,6 +143,7 @@ struct OrderRequestView: View {
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
         .presentationDetents([.height(350)])
+        .background(AppColor.background.ignoresSafeArea())
     }
 
     // MARK: - Confirm Buttons

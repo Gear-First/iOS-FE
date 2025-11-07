@@ -11,6 +11,10 @@ import SwiftUI
 struct PartSearchSheetView<ViewModel: PartSelectable>: View {
     @ObservedObject var viewModel: ViewModel
     var disabledCodes: Set<String> = []
+    
+    var carModelName: String? = nil
+    var categoryName: String? = nil
+    
     @Environment(\.dismiss) var dismiss
     @State private var searchText = ""
     @State private var partList: [PartItem] = []
@@ -22,17 +26,14 @@ struct PartSearchSheetView<ViewModel: PartSelectable>: View {
                 // 검색창
                 EditableField(
                     value: $searchText,
-                    placeholder: "부품명을 입력"
+                    placeholder: "부품명 / 부품 코드 입력"
                 )
                 .padding()
-                .onSubmit {
-                    Task { await searchParts() }
-                }
                 
                 if isLoading {
                     ProgressView("검색 중...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if partList.isEmpty {
+                } else if filteredParts.isEmpty {
                     Spacer()
                     Text("검색 결과가 없습니다.")
                         .foregroundColor(.gray)
@@ -40,7 +41,7 @@ struct PartSearchSheetView<ViewModel: PartSelectable>: View {
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 12) {
-                            ForEach(partList) { item in
+                            ForEach(filteredParts) { item in
                                 let isDisabled = disabledCodes.contains(item.partCode)
                                 Button {
                                     guard !isDisabled else { return }
@@ -90,21 +91,47 @@ struct PartSearchSheetView<ViewModel: PartSelectable>: View {
             }
             .navigationTitle("부품 검색")
             .navigationBarTitleDisplayMode(.inline)
+            .background(AppColor.background.ignoresSafeArea())
         }
         .task { await searchParts() }
     }
     
-    private func searchParts() async {
-        guard let carModelId = 1 as Int? else { return } // 테스트용, 실제로는 선택 차량 ID
-        isLoading = true
-        do {
-//            let response = try await PurchaseOrderAPI.fetchParts(carModelId: carModelId, keyword: searchText)
-            let response = try await PurchaseOrderAPI.fetchParts()
-            partList = response
-        } catch {
-            print("부품 검색 오류:", error.localizedDescription)
-            partList = []
+    private var filteredParts: [PartItem] {
+        if searchText.trimmingCharacters(in: .whitespaces).isEmpty {
+            return partList
+        } else {
+            return partList.filter {
+                $0.partName.localizedCaseInsensitiveContains(searchText)
+                || $0.partCode.localizedCaseInsensitiveContains(searchText)
+            }
         }
-        isLoading = false
     }
+    
+    /// 화면 제목 자동 지정
+        private var sheetTitle: String {
+            if categoryName == "소모품" { return "소모품 검색" }
+            if carModelName != nil { return "차량별 부품 검색" }
+            return "부품 검색"
+        }
+        
+        /// 검색 로직 통합
+        private func searchParts() async {
+            isLoading = true
+            do {
+                if let categoryName, !categoryName.isEmpty {
+                    // ex) categoryName = "소모품"
+                    partList = try await PurchaseOrderAPI.fetchIntegratedParts(categoryName: categoryName)
+                } else if let carModelName, !carModelName.isEmpty {
+                    // ex) carModelName = "아반떼"
+                    partList = try await PurchaseOrderAPI.fetchIntegratedParts(carModelName: carModelName)
+                } else {
+                    // 기본 (전체 부품)
+                    partList = try await PurchaseOrderAPI.fetchParts()
+                }
+            } catch {
+                print("부품 검색 오류:", error.localizedDescription)
+                partList = []
+            }
+            isLoading = false
+        }
 }
