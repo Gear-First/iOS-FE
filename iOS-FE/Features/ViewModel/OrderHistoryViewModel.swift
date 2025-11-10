@@ -46,13 +46,13 @@ final class OrderHistoryViewModel: ObservableObject {
     }
     
     // MARK: - 서버에서 전체 주문 불러오기 (초기 로딩)
-    func fetchAllOrders(branchCode: String, engineerId: Int) async {
+    func fetchAllOrders() async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         
         do {
-            let ordersFromServer = try await PurchaseOrderAPI.fetchOrderAllStatus(branchCode: branchCode, engineerId: engineerId)
+            let ordersFromServer = try await PurchaseOrderAPI.fetchOrderAllStatus()
             self.orders = ordersFromServer
         } catch {
             errorMessage = error.localizedDescription
@@ -61,8 +61,8 @@ final class OrderHistoryViewModel: ObservableObject {
     }
     
     // MARK: - 새로고침: 전체 데이터 다시 가져오기
-    func refreshOrders(branchCode: String, engineerId: Int) async {
-        await fetchAllOrders(branchCode: branchCode, engineerId: engineerId)
+    func refreshOrders() async {
+        await fetchAllOrders()
     }
     
     // MARK: - 주문 상태 변경 (Mock)
@@ -79,16 +79,14 @@ final class OrderHistoryViewModel: ObservableObject {
     }
     
     // MARK: - 취소 (업데이트 + 실패 시 롤백)
-    func cancelOrder(orderId: Int, branchCode: String, engineerId: Int) async {
+    func cancelOrder(orderId: Int) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
         
         do {
             let res = try await PurchaseOrderAPI.cancelOrder(
-                orderId: orderId,
-                branchCode: branchCode,
-                engineerId: engineerId
+                orderId: orderId
             )
             
             guard res.success else {

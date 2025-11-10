@@ -56,7 +56,8 @@ final class ReceiptCompletionViewModel: ObservableObject {
                     UsedPartRequest(
                         partId: part.partId ?? Int.random(in: 100...999), // 더미 id 보정
                         partName: part.partName,
-                        quantity: part.quantity
+                        quantity: part.quantity,
+                        price: part.unitPrice
                     )
                 }
             )
@@ -94,9 +95,7 @@ final class ReceiptCompletionViewModel: ObservableObject {
            do {
                let parts = try await ReceiptAPI.fetchCompleteParts(
                    receiptNum: receiptNum,
-                   vehicleNumber: vehicleNumber,
-                   branchCode: branchCode,
-                   engineerId: engineerId
+                   vehicleNumber: vehicleNumber
                )
                DispatchQueue.main.async {
                    self.completeParts = parts

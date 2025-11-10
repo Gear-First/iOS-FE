@@ -204,7 +204,7 @@ struct ReceiptDetailView: View {
     private func createdOrderDetailView() -> some View {
         if let order = createdOrder {
             OrderDetailView(
-                order: Binding.constant(order),
+                orderId: order.orderId,
                 onCancel: { },
                 onBack: {
                     createdOrder = nil
@@ -358,6 +358,7 @@ struct SingleRepairCompletionSection: View { struct PartLine: Identifiable { let
             Text("원인: \(causeText)")
             .font(.subheadline)
             .foregroundColor(.secondary) }
+        
         // 부품 라인
         VStack(alignment: .leading, spacing: 10) {
             ForEach(parts) {p in
@@ -436,120 +437,195 @@ struct CombinedCompletionSummarySectionCompact: View {
         let name: String
         let quantity: Int
         let unitPrice: Double
-        var lineTotal: Double { Double(quantity) * unitPrice } }
+        var lineTotal: Double { Double(quantity) * unitPrice }
+    }
+
     let descriptionText: String // 수리내용
     let causeText: String // 원인
     let orderedLines: [Line] // 발주된 부품
-    let extraUsedLines: [Line] // Completion에서 추가로 사용한 부품
-    private var orderedSubtotal: Double {
-        orderedLines.reduce(0) { $0 + $1.lineTotal } }
+    let extraUsedLines: [Line] // Completion에서 추가 사용 부품
+    
+    private var orderedSubtotal: Double { orderedLines.reduce(0) { $0 + $1.lineTotal } }
     private var extraSubtotal: Double { extraUsedLines.reduce(0) { $0 + $1.lineTotal } }
     private var grandTotal: Double { orderedSubtotal + extraSubtotal }
-    var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            // 헤더
-            HStack {
-                Text("수리 완료 상세")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-            }
 
-            // 수리 내용/원인
-            VStack(alignment: .leading, spacing: 8) {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            // 🧾 헤더
+            Text("수리 완료 상세")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(AppColor.mainTextBlack)
+
+            // 수리 내용 / 원인
+            VStack(alignment: .leading, spacing: 6) {
                 Text(descriptionText)
-                    .font(.headline)
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppColor.mainTextBlack)
                 Text("원인: \(causeText)")
-                    .font(.subheadline)
+                    .font(.system(size: 13))
                     .foregroundColor(AppColor.textMuted)
             }
 
             // 발주된 부품
             if !orderedLines.isEmpty {
-                section(title: "발주된 부품", lines: orderedLines, footerTotal: orderedSubtotal)
+                partSection(
+                    title: "발주된 부품",
+                    lines: orderedLines,
+                    footerTotal: orderedSubtotal,
+                    color: .gray
+                )
             }
+
             // 추가 사용 부품
             if !extraUsedLines.isEmpty {
-                section(title: "추가 사용 부품", lines: extraUsedLines, footerTotal: extraSubtotal)
+                partSection(
+                    title: "추가 사용 부품",
+                    lines: extraUsedLines,
+                    footerTotal: extraSubtotal,
+                    color: .gray
+                )
             }
 
             // 총 합계
             HStack {
                 Text("총 합계")
-                    .font(.headline)
-                    .foregroundColor(AppColor.mainTextBlack)
+                    .font(.system(size: 17, weight: .bold))
                 Spacer()
                 Text(formatPrice(grandTotal))
-                    .font(.title3)
-                    .fontWeight(.bold)
+                    .font(.system(size: 20, weight: .heavy))
                     .foregroundColor(AppColor.mainBlue)
             }
-            .padding(.top, 4)
+            .padding(.top, 8)
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(Color.white)
-                .shadow(color: .black.opacity(0.08), radius: 5, x: 0, y: 2)
+                .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
         )
     }
-    
+
+    // MARK: - 부품 섹션
     @ViewBuilder
-    private func section(title: String, lines: [Line], footerTotal: Double) -> some View {
+    private func partSection(
+        title: String,
+        lines: [Line],
+        footerTotal: Double,
+        color: Color
+    ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
+            HStack {
                 Text(title)
-                    .font(.headline)
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(AppColor.mainTextBlack)
-                Text("\(lines.count)건")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(AppColor.bgGray))
-                    .foregroundColor(.secondary)
                 Spacer()
                 Text("소계 \(formatPrice(footerTotal))")
-                    .font(.callout)
-                    .fontWeight(.semibold)
-                    .foregroundColor(AppColor.mainBlue)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.gray)
             }
 
-            LazyVStack(spacing: 10) {
+            VStack(spacing: 8) {
                 ForEach(lines) { line in
-                    HStack(alignment: .center, spacing: 12) {
+                    HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(line.name)
-                                .font(.body)
+                                .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(AppColor.mainTextBlack)
-                            HStack(spacing: 12) {
+                            HStack(spacing: 10) {
                                 Text("수량 \(line.quantity)EA")
-                                    .font(.caption)
+                                    .font(.system(size: 12))
                                     .foregroundColor(.secondary)
                                 Text("단가 \(formatPrice(line.unitPrice))")
-                                    .font(.caption)
+                                    .font(.system(size: 12))
                                     .foregroundColor(.secondary)
                             }
                         }
                         Spacer()
                         Text(formatPrice(line.lineTotal))
-                            .font(.body)
-                            .fontWeight(.semibold)
-                            .foregroundColor(AppColor.mainBlue)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(Color(hex: "#1E293B"))
                     }
-                    .padding(12)
+                    .padding(10)
                     .background(AppColor.surfaceMuted)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
             }
         }
     }
-    
-    // MARK: - Preview 데이터 헬퍼
-    private func mockCompletedInfos() -> [ReceiptDetailViewModel.CompletionInfo] { [ .init( completionDate: "2025-10-13", repairDescription: "엔진오일 교체", cause: "주행거리 초과", partName: "엔진오일", partQuantity: 2, partPrice: 45000, totalPrice: 90000 ), .init( completionDate: "2025-10-13", repairDescription: "브레이크 패드 교체", cause: "마모 심함", partName: "브레이크 패드", partQuantity: 1, partPrice: 68000, totalPrice: 68000 ) ] } // MARK: - Preview Helper
-    private func mockReceiptItem( id: String, carNumber: String, ownerName: String, carModel: String, requestContent: String, date: String, phoneNumber: String, manager: String? = nil, status: ReceiptStatus, leadTimeDays: Int? = nil, completionInfos: [ReceiptDetailViewModel.CompletionInfo]? = nil ) -> ReceiptItem { ReceiptItem( id: id, carNumber: carNumber, ownerName: ownerName, carModel: carModel, requestContent: requestContent, date: date, phoneNumber: phoneNumber, manager: manager, status: status, leadTimeDays: leadTimeDays, completionInfos: completionInfos ) }
-    
-    private func mockOrderedItems() -> [OrderItem] { [ OrderItem(partCode: "PRT-BRK-001", partName: "브레이크 패드", quantity: 2, price: 35000), OrderItem(partCode: "PRT-OIL-001", partName: "엔진오일", quantity: 3, price: 20000) ] }
-    
-    /// 완료된 수리 정보를 모아 보여주는 섹션 뷰
+
+    private func formatPrice(_ value: Double) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        return (f.string(from: NSNumber(value: value)) ?? "0") + "원"
+    }
 }
+
+
+// MARK: - 프리뷰 예시 (상속 제거 버전)
+#Preview("접수 상세 (수리중)") {
+    let mockItem = ReceiptItem(
+        id: "CHK-2025-01",
+        carNumber: "12가 3456",
+        ownerName: "김민수",
+        carModel: "쏘나타",
+        requestContent: "엔진오일 교체 및 점검",
+        date: "2025-11-08",
+        phoneNumber: "010-1234-5678",
+        manager: "티파니 송",
+        status: .inProgress,
+        leadTimeDays: 2
+    )
+    
+    let viewModel = ReceiptDetailViewModel(item: mockItem)
+    
+    return NavigationStack {
+        ReceiptDetailView(
+            receiptDetailViewModel: viewModel,
+            previewOrderedItems: [
+                OrderItem(partCode: "ENG01", partName: "엔진오일", quantity: 2, price: 45000),
+                OrderItem(partCode: "FLT01", partName: "오일필터", quantity: 1, price: 12000)
+            ],
+            isPreviewMode: true
+        )
+    }
+}
+
+#Preview("접수 상세 (완료)") {
+    let mockItem = ReceiptItem(
+        id: "CHK-2025-02",
+        carNumber: "45나 6789",
+        ownerName: "박지훈",
+        carModel: "아반떼",
+        requestContent: "브레이크 패드 교체",
+        date: "2025-11-06",
+        phoneNumber: "010-2345-6789",
+        manager: "티파니 송",
+        status: .completed,
+        leadTimeDays: 3,
+        completionInfos: [
+            ReceiptDetailViewModel.CompletionInfo(
+                completionDate: "2025-11-08",
+                repairDescription: "브레이크 패드 교체",
+                cause: "마모 심함",
+                partName: "브레이크 패드",
+                partQuantity: 1,
+                partPrice: 68000,
+                totalPrice: 68000
+            )
+        ]
+    )
+    
+    let viewModel = ReceiptDetailViewModel(item: mockItem)
+    
+    return NavigationStack {
+        ReceiptDetailView(
+            receiptDetailViewModel: viewModel,
+            previewOrderedItems: [
+                OrderItem(partCode: "BRK01", partName: "브레이크 패드", quantity: 1, price: 68000),
+                OrderItem(partCode: "FIL01", partName: "차량 필터", quantity: 1, price: 68000)
+            ],
+            isPreviewMode: true
+        )
+    }
+}
+

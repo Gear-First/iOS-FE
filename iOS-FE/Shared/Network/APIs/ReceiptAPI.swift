@@ -59,17 +59,25 @@ enum ReceiptAPI {
     }
     
     // MARK: - 발주 상세
-    static func fetchCompleteParts(receiptNum: String, vehicleNumber: String, branchCode: String = "서울 대리점", engineerId: Int = 10) async throws -> [OrderItem] {
+    static func fetchCompleteParts(receiptNum: String, vehicleNumber: String) async throws -> [OrderItem] {
+        guard let session = UserSession.current else {
+            throw URLError(.userAuthenticationRequired)
+        }
+        
         let encodedVehicle = vehicleNumber.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? vehicleNumber
-        let url = "\(APIConfig.Order.baseURL)/purchase-orders/repair/parts/\(receiptNum)/\(encodedVehicle)?branchCode=\(branchCode)&engineerId=\(engineerId)"
+        
+        let url = "\(APIConfig.Order.baseURL)/purchase-orders/repair/parts/\(receiptNum)/\(encodedVehicle)"
 
         // 서버는 빈 바디를 기대할 수 있으므로 빈 Data()로 POST 해 본다.
         let response: CompletePartsResponse = try await NetworkManager.shared.request(
             url: url,
-            method: "GET"
+            method: "GET",
+            withAuth: true
         )
 
         let data = response.data
+        print("[fetchCompleteParts] response.data.items:", response.data.items)
+
         return data.items.compactMap { dto in
             guard let code = dto.partCode,
                   let name = dto.partName,

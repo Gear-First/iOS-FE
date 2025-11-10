@@ -183,10 +183,16 @@ struct OrderRequestView: View {
                 formVM.resetForm()
                 
                 // 내접수에서 발주한 경우에는 발주 상세보기로 가지 않고 그냥 뒤로가기만
-                if !isFromReceipt {
+                if isFromReceipt {
+                    // 내접수 → 그냥 닫기
+                    print("[OrderRequestView] 내접수에서 발주 완료 - 뒤로가기")
+                    dismiss()
+                } else {
+                    // 일반 발주 → 상세보기 이동
+                    print("[OrderRequestView] 발주 요청 완료 - 상세보기로 이동 (orderId: \(createdOrder.orderId))")
                     onOrderCreated(createdOrder)
+                    // NavigationDestination이 활성화되면 자동으로 이동함
                 }
-                dismiss()
             }
         }
     }

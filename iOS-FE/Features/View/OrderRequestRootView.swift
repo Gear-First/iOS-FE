@@ -10,28 +10,22 @@ struct OrderRequestRootView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                OrderRequestView(
-                    historyViewModel: historyViewModel,
-                    formVM: formVM,
-                    initialVehicle: nil,  // 발주요청 탭에서는 차량 정보 없음
-                    receiptNum: ""  // 발주요청 탭에서는 접수번호 없음
-                ) { order in
-                    createdOrder = order
-                    showOrderDetail = true
-                }
-                
-                NavigationLink(
-                    destination: createdOrderDetailView(),
-                    isActive: $showOrderDetail
-                ) {
-                    EmptyView()
-                }
-                .hidden()
+            OrderRequestView(
+                historyViewModel: historyViewModel,
+                formVM: formVM,
+                initialVehicle: nil,  // 발주요청 탭에서는 차량 정보 없음
+                receiptNum: ""  // 발주요청 탭에서는 접수번호 없음
+            ) { order in
+                // 발주 생성 완료 시 상세 화면으로 이동
+                createdOrder = order
+                showOrderDetail = true
             }
             .navigationTitle("부품 요청")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.visible, for: .navigationBar)
+            .navigationDestination(isPresented: $showOrderDetail) {
+                createdOrderDetailView()
+            }
         }
     }
     
@@ -39,28 +33,24 @@ struct OrderRequestRootView: View {
     private func createdOrderDetailView() -> some View {
         if let order = createdOrder {
             OrderDetailView(
-                order: Binding(
-                    get: { order },
-                    set: { createdOrder = $0 }
-                ),
+                orderId: order.orderId,
                 onCancel: {
                     Task {
                         await self.historyViewModel.cancelOrder(
-                            orderId: order.orderId,
-                            branchCode: "서울 대리점",
-                            engineerId: 10
+                            orderId: order.orderId
                         )
-                        self.createdOrder?.status = "CANCELLED"
+                        // 취소 후 발주 내역 새로고침
+                        await self.historyViewModel.refreshOrders()
                     }
                 },
                 onBack: {
+                    // 뒤로가기 시 발주 요청 화면으로 돌아감
                     createdOrder = nil
                     showOrderDetail = false
-                    tabRouter.selectedIndex = 3
                 }
             )
         } else {
-            EmptyView()
+            ProgressView("불러오는 중...")
         }
     }
 

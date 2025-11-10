@@ -56,7 +56,7 @@ final class OrderRequestViewModel: ObservableObject {
                 let partName = part.partName
                 // partCode가 있으면 사용, 없으면 code 사용
                 let partCode = part.partCode.isEmpty ? part.code : part.partCode
-                let price = part.unitPrice ?? 0
+                let price = part.unitPrice
                 let quantity = part.quantity
                 
                 itemDTOs.append(
@@ -123,7 +123,7 @@ final class OrderRequestViewModel: ObservableObject {
                 status: response.data.orderStatus,
                 totalPrice: 0,
                 requestDate: ISO8601DateFormatter().string(from: Date()),
-                approvedDate: nil,
+                processedDate: nil,
                 transferDate: nil,
                 completedDate: nil,
                 items: response.data.items.map {
@@ -132,7 +132,8 @@ final class OrderRequestViewModel: ObservableObject {
                         partName: $0.partName,
                         partCode: $0.partCode,
                         price: $0.price,
-                        quantity: $0.quantity
+                        quantity: $0.quantity,
+                        totalPrice: $0.totalPrice
                     )
                 }
             )
@@ -161,15 +162,15 @@ final class OrderRequestViewModel: ObservableObject {
     // MARK: - 부품 리스트
     @Published var partList: [PartItem] = []
     
-    func fetchParts() async {
+    func fetchIntegratedParts() async {
         isLoading = true
         errorMessage = nil
         do {
-            let parts = try await PurchaseOrderAPI.fetchParts()
+            let parts = try await PurchaseOrderAPI.fetchIntegratedParts()
             self.partList = parts
         } catch {
             self.errorMessage = error.localizedDescription
-            print("fetchParts error:", error.localizedDescription)
+            print("fetchIntegratedParts error:", error.localizedDescription)
         }
         isLoading = false
     }

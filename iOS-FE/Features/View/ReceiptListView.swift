@@ -20,8 +20,13 @@ struct ReceiptListView: View {
 
     private var mainContent: some View {
         Group {
-            if receiptListViewModel.isLoading && receiptListViewModel.items.isEmpty {
-                loadingState
+            if receiptListViewModel.isLoading {
+                VStack {
+                    ProgressView("불러오는 중...")
+                        .progressViewStyle(CircularProgressViewStyle(tint: AppColor.mainBlue))
+                        .font(.headline)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if receiptListViewModel.items.isEmpty {
                 EmptyStateView(
                     title: "접수 이력이 없습니다.",

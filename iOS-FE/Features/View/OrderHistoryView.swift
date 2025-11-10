@@ -2,7 +2,11 @@ import SwiftUI
 
 struct OrderHistoryView: View {
     @ObservedObject var historyViewModel: OrderHistoryViewModel
-    
+
+    // ✅ 발주 상세 이동 제어용 상태
+    @State private var selectedOrder: OrderHistoryItem?
+    @State private var goToDetail = false
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -19,30 +23,54 @@ struct OrderHistoryView: View {
                 .padding(.vertical, 24)
             }
             .refreshable {
-                await historyViewModel.refreshOrders(branchCode: "서울 대리점", engineerId: 10)
+                await historyViewModel.refreshOrders()
             }
             .navigationTitle("발주 내역")
             .navigationBarTitleDisplayMode(.inline)
             .background(AppColor.background.ignoresSafeArea())
             .task {
-                await historyViewModel.fetchAllOrders(branchCode: "서울 대리점", engineerId: 10)
+                await historyViewModel.fetchAllOrders()
             }
-            .navigationDestination(for: OrderHistoryItem.self) { order in
-                if let i = historyViewModel.orders.firstIndex(where: { $0.orderId == order.orderId }) {
-                    OrderDetailView(order: $historyViewModel.orders[i]) {
-                        Task {
-                            await historyViewModel.cancelOrder(
-                                orderId: order.orderId,
-                                branchCode: "서울 대리점",
-                                engineerId: 10
-                            )
+
+            // ✅ ① 새로 만든 주문을 선택했을 때 이동
+            .navigationDestination(isPresented: $goToDetail) {
+                if let order = selectedOrder {
+                    OrderDetailView(
+                        orderId: order.orderId,
+                        onCancel: {
+                            Task {
+                                await historyViewModel.cancelOrder(orderId: order.orderId)
+                                await historyViewModel.refreshOrders()
+                            }
+                        },
+                        onBack: {
+                            selectedOrder = nil
+                            goToDetail = false
                         }
-                    }
+                    )
                 }
+            }
+
+            // ✅ ② 리스트 클릭 시 이동
+            .navigationDestination(for: OrderHistoryItem.self) { order in
+                OrderDetailView(
+                    orderId: order.orderId,
+                    onCancel: {
+                        Task {
+                            await historyViewModel.cancelOrder(orderId: order.orderId)
+                            await historyViewModel.refreshOrders()
+                        }
+                    },
+                    onBack: {
+                        selectedOrder = nil
+                        goToDetail = false
+                    }
+                )
             }
         }
     }
 
+    // MARK: - 필터 탭
     private var filterTabs: some View {
         HStack(spacing: 12) {
             ForEach(OrderHistoryViewModel.OrderFilter.allCases) { filter in
@@ -71,12 +99,14 @@ struct OrderHistoryView: View {
         }
     }
 
+    // MARK: - 총 개수 표시
     private var totalCount: some View {
         Text("총 \(historyViewModel.filteredOrders.count)건")
             .font(.system(size: 18, weight: .bold))
             .foregroundColor(AppColor.mainTextBlack)
     }
 
+    // MARK: - 콘텐츠 섹션
     private var contentSection: some View {
         Group {
             if historyViewModel.isLoading {
@@ -94,6 +124,7 @@ struct OrderHistoryView: View {
                 .frame(height: 240)
             } else {
                 VStack(spacing: 16) {
+                    // ✅ 리스트 클릭 시 상세로 이동
                     ForEach(historyViewModel.filteredOrders, id: \.orderId) { order in
                         NavigationLink(value: order) {
                             orderRow(order: order)
@@ -104,7 +135,8 @@ struct OrderHistoryView: View {
             }
         }
     }
-    
+
+    // MARK: - 발주 리스트 셀
     @ViewBuilder
     private func orderRow(order: OrderHistoryItem) -> some View {
         let status = OrderStatusMapper.map(order.status)
@@ -122,7 +154,7 @@ struct OrderHistoryView: View {
                     .background(status.badgeColor)
                     .clipShape(Capsule())
             }
-            
+
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(order.items) { item in
                     Text("\(item.partName) (\(item.quantity)개)")
@@ -130,7 +162,7 @@ struct OrderHistoryView: View {
                         .foregroundColor(AppColor.mainTextBlack)
                 }
             }
-            
+
             HStack {
                 Text("요청일: \(formatDate(order.requestDate))")
                     .font(.system(size: 13, weight: .medium))
@@ -140,21 +172,17 @@ struct OrderHistoryView: View {
         }
         .gfCardStyle()
     }
-    
+
+    // MARK: - 날짜 포맷
     private func formatDate(_ raw: String?) -> String {
         guard let raw = raw else { return "-" }
-        
+
         let iso = ISO8601DateFormatter()
-        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds] // 2025-10-28T12:34:56.789Z
-        if let d = iso.date(from: raw) {
-            return displayString(from: d)
-        }
-        // 밀리초 없는 형태 대응
-        iso.formatOptions = [.withInternetDateTime] // 2025-10-28T12:34:56Z
-        if let d = iso.date(from: raw) {
-            return displayString(from: d)
-        }
-        // 2) 커스텀 포맷 백업 (서버가 지역시간 문자열을 줄 경우)
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let d = iso.date(from: raw) { return displayString(from: d) }
+        iso.formatOptions = [.withInternetDateTime]
+        if let d = iso.date(from: raw) { return displayString(from: d) }
+
         let fmts = [
             "yyyy-MM-dd'T'HH:mm:ss.SSS",
             "yyyy-MM-dd'T'HH:mm:ss",
@@ -169,11 +197,10 @@ struct OrderHistoryView: View {
                 return displayString(from: d)
             }
         }
-        // 실패 시 원문 반환
         print("날짜 파싱 실패: \(raw)")
         return raw
     }
-    
+
     private func displayString(from date: Date) -> String {
         let display = DateFormatter()
         display.locale = Locale(identifier: "ko_KR")

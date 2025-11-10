@@ -16,4 +16,5 @@ struct UsedPartRequest: Codable {
     let partId: Int
     let partName: String
     let quantity: Int
+    let price: Double?
 }
