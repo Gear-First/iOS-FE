@@ -36,6 +36,26 @@ enum OrderStatus: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - OrderStatusMapper
+struct OrderStatusMapper {
+    static func map(_ status: String) -> OrderStatus {
+        switch status.uppercased() {
+        case "PENDING": return .PENDING
+        case "APPROVED": return .APPROVED
+        case "REJECTED": return .REJECTED
+        case "SHIPPED": return .SHIPPED
+        case "COMPLETED": return .COMPLETED
+        case "CANCELLED": return .CANCELLED
+        default: return .PENDING
+        }
+    }
+
+    static func color(for status: String) -> Color {
+        map(status).badgeColor
+    }
+}
+
+
 // MARK: - 로컬 주문 항목 (UI/로컬 상태용)
 struct OrderItem: Identifiable, Codable, Hashable {
     let id: String
@@ -136,14 +156,16 @@ struct PartItem: Identifiable, Hashable, Codable {
     var partName: String
     var partCode: String
     var categoryName: String
+    var price: Double?
 }
 
 extension PartItem {
-    init(dto: PartDTO) {
+    init(dto: IntegratedPartDTO) {
         self.id = String(dto.id)
         self.partName = dto.name
         self.partCode = dto.code
-        self.categoryName = dto.category.name
+        self.categoryName = dto.categoryName ?? ""
+        self.price = dto.price
     }
 }
 
@@ -246,7 +268,7 @@ struct OrderCreateItem: Decodable {
     let quantity: Int
     let totalPrice: Double
 }
-
+ 
 // MARK: - 공용 메시지
 struct MessageResponse: Decodable {
     let status: Int
@@ -285,7 +307,7 @@ struct OrderHistoryItem: Decodable, Hashable {
     var status: String
     let totalPrice: Double
     let requestDate: String?
-    let approvedDate: String?
+    let processedDate: String?
     let transferDate: String?
     let completedDate: String?
     let items: [OrderHistoryPart]
@@ -297,6 +319,7 @@ struct OrderHistoryPart: Identifiable, Decodable, Hashable {
     let partCode: String
     let price: Double
     let quantity: Int
+    let totalPrice: Double? 
 }
 
 // MARK: - ViewModel 확장 (요청 바디 생성)

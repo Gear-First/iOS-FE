@@ -51,6 +51,7 @@ struct PartSearchSheetView<ViewModel: PartSelectable>: View {
                                         repairPart.partId = Int(item.id)
                                         repairPart.partCode = item.partCode
                                         repairPart.partName = item.partName
+                                        repairPart.unitPrice = item.price ?? 0.0
                                     } else {
                                         // 다른 ViewModel인 경우 code만 설정
                                         viewModel.name = item.partName
@@ -126,7 +127,7 @@ struct PartSearchSheetView<ViewModel: PartSelectable>: View {
                     partList = try await PurchaseOrderAPI.fetchIntegratedParts(carModelName: carModelName)
                 } else {
                     // 기본 (전체 부품)
-                    partList = try await PurchaseOrderAPI.fetchParts()
+                    partList = try await PurchaseOrderAPI.fetchIntegratedParts()
                 }
             } catch {
                 print("부품 검색 오류:", error.localizedDescription)

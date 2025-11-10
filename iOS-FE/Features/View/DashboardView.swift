@@ -4,6 +4,7 @@ struct DashboardView: View {
     @ObservedObject var receiptListViewModel: ReceiptListViewModel
     @ObservedObject var historyViewModel: OrderHistoryViewModel
     @ObservedObject var tabRouter: TabRouter
+    @StateObject private var userViewModel = UserViewModel()
     @State private var showMyPage = false
 
     private var openReceipts: Int {
@@ -28,7 +29,7 @@ struct DashboardView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     headerSection
                     overviewCard
-                    repairStatusCard
+//                    repairStatusCard
                     orderSummaryCard
                     quickLinksSection
                 }
@@ -45,7 +46,7 @@ struct DashboardView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "person.crop.circle.fill")
                                 .font(.system(size: 20))
-                            Text("박우진님")
+                            Text("\(userViewModel.userInfo?.name ?? "로딩 중...")님")
                                 .font(.system(size: 14, weight: .semibold))
                         }
                         .foregroundColor(AppColor.mainTextBlack)
@@ -61,17 +62,18 @@ struct DashboardView: View {
             }
             .sheet(isPresented: $showMyPage) {
                 NavigationStack {
-                    MyPageView(onLogout: handleLogout)
+                    MyPageView()
                 }
                 .presentationDetents([.large])
             }
         }
         .task {
+            await userViewModel.fetchUserInfo()
             if receiptListViewModel.items.isEmpty {
                 await receiptListViewModel.fetchReceipts()
             }
             if historyViewModel.orders.isEmpty {
-                await historyViewModel.fetchAllOrders(branchCode: "서울 대리점", engineerId: 10)
+                await historyViewModel.fetchAllOrders()
             }
         }
     }
