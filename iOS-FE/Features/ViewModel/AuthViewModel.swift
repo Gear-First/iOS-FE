@@ -16,9 +16,12 @@ final class AuthViewModel: NSObject, ObservableObject, ASWebAuthenticationPresen
             forName: NSNotification.Name("UnauthorizedError"),
             object: nil,
             queue: .main
-        ) { [weak self] _ in
-            print("[AuthViewModel] 401 에러 감지 → 로그아웃 처리")
-            self?.logout()
+        ) { [weak self] notification in
+            let statusCode = notification.userInfo?["statusCode"] as? Int ?? -1
+            let responseBody = notification.userInfo?["responseBody"] as? String ?? "응답 본문 없음"
+            let failingURL = notification.userInfo?["url"] as? String ?? "알 수 없는 URL"
+            print("[AuthViewModel] \(statusCode) 에러 감지 (\(failingURL)) → \(responseBody)")
+//            self?.logout()
         }
     }
 
