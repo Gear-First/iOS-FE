@@ -82,11 +82,11 @@ enum PurchaseOrderAPI {
             // 401 Unauthorized 에러 처리
             if httpResponse.statusCode == 401 {
                 print("[PurchaseOrderAPI] 현재 토큰:", TokenManager.shared.getAccessToken() ?? "nil")
-                TokenManager.shared.clearTokens()
-                UserSession.clear()
+//                TokenManager.shared.clearTokens()
+//                UserSession.clear()
                 await MainActor.run {
                     NotificationCenter.default.post(name: NSNotification.Name("UnauthorizedError"), object: nil)
-                    AuthViewModel.shared.logout()
+//                    AuthViewModel.shared.logout()
                 }
                 throw URLError(.userAuthenticationRequired)
             }
@@ -173,4 +173,3 @@ enum PurchaseOrderAPI {
             return response.data
     }
 }
-

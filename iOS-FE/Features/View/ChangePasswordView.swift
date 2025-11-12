@@ -157,7 +157,7 @@ struct ChangePasswordView: View {
         isLoading = true
         defer { isLoading = false }
 
-        let url = URL(string: "http://34.120.215.23/auth/api/v1/auth/change-password")!
+        let url = URL(string: "\(APIConfig.Auth.baseURL)/api/v1/auth/change-password")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

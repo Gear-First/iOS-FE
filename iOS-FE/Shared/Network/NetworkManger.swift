@@ -61,16 +61,20 @@ final class NetworkManager {
         
         // 401 Unauthorized 에러 처리 (토큰이 없거나 만료된 경우)
         if httpResponse.statusCode == 401 {
+            let errorBody = String(data: data, encoding: .utf8) ?? "응답 본문 없음"
             print("[NetworkManager] 401 Unauthorized - 토큰이 없거나 만료되었습니다.")
             print("[NetworkManager] 현재 토큰:", TokenManager.shared.getAccessToken() ?? "nil")
-            // 토큰 제거 및 로그인 화면으로 리다이렉트 필요
-            TokenManager.shared.clearTokens()
-            UserSession.clear()
-            // NotificationCenter를 통해 로그인 화면으로 리다이렉트
+            print("[NetworkManager] 서버 응답:", errorBody)
             await MainActor.run {
-                print("[NetworkManager] 로그인 화면으로 리다이렉트 알림 전송")
-                NotificationCenter.default.post(name: NSNotification.Name("UnauthorizedError"), object: nil)
-                AuthViewModel.shared.logout()
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("UnauthorizedError"),
+                    object: nil,
+                    userInfo: [
+                        "statusCode": httpResponse.statusCode,
+                        "responseBody": errorBody,
+                        "url": url.absoluteString
+                    ]
+                )
             }
             throw URLError(.userAuthenticationRequired)
         }

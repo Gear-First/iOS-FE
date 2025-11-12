@@ -12,7 +12,7 @@ final class UserViewModel: ObservableObject {
         }
 
         let userId = session.engineerId
-        let urlString = "http://34.120.215.23/user/api/v1/getUser?userId=\(userId)"
+        let urlString = "\(APIConfig.User.baseURL)/getUser?userId=\(userId)"
         print("📡 [UserViewModel] 사용자 정보 요청 URL:", urlString)
 
         do {
@@ -26,4 +26,3 @@ final class UserViewModel: ObservableObject {
         isLoading = false
     }
 }
-

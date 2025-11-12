@@ -7,7 +7,7 @@ final class AuthService {
     
     private let clientId = "gearfirst-client-mobile"
     private let redirectURI = "gearfirst://callback"
-    private let authServer = "http://34.120.215.23/auth"
+    private let authServer = APIConfig.Auth.baseURL
     private var codeVerifier: String?
     
     // MARK: - Step 1. 인증 URL 생성
@@ -62,6 +62,12 @@ final class AuthService {
                 print("[AuthService] 요청 실패:", error.localizedDescription)
                 completion(false)
                 return
+            }
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("[AuthService] 응답 상태 코드:", httpResponse.statusCode)
+            } else {
+                print("[AuthService] HTTPURLResponse 캐스팅 실패")
             }
             
             guard let data = data else {
