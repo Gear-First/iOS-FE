@@ -46,7 +46,7 @@ struct EditableField<T: LosslessStringConvertible>: View {
             .background(AppColor.surface)
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(isFocused ? AppColor.mainBlue : AppColor.cardBorder, lineWidth: 1)
+                    .stroke(isFocused ? AppColor.mainColor : AppColor.cardBorder, lineWidth: 1)
             )
             .shadow(color: AppColor.cardShadow, radius: isFocused ? 12 : 6, x: 0, y: 4)
             

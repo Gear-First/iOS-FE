@@ -6,34 +6,32 @@ struct ReceiptDetailView: View {
     @State private var showAlert = false
     @State private var alertType: AlertType? = nil
     @State private var goToOrder = false
-    private let isPreviewMode: Bool
-    
-    // 새로 추가
-    private var hasOrder: Bool { !orderedItems.isEmpty }
-
+    @State private var showOrderDetail = false
     @State private var orderedItems: [OrderItem] = []
     @State private var createdOrder: OrderHistoryItem?
-    @State private var showOrderDetail = false
+    @State private var isLoading = true
+    private let isPreviewMode: Bool
     
+    private var hasOrder: Bool { !orderedItems.isEmpty }
     
-    //preview
+    // MARK: - Init
     init(
-           receiptDetailViewModel: ReceiptDetailViewModel,
-           previewOrderedItems: [OrderItem]? = nil,
-           previewHasOrder: Bool = false,
-           isPreviewMode: Bool = false
-       ) {
-           self.receiptDetailViewModel = receiptDetailViewModel
-           _orderedItems = State(initialValue: previewOrderedItems ?? [])
-           self.isPreviewMode = isPreviewMode
-       }
+        receiptDetailViewModel: ReceiptDetailViewModel,
+        previewOrderedItems: [OrderItem]? = nil,
+        isPreviewMode: Bool = false
+    ) {
+        self.receiptDetailViewModel = receiptDetailViewModel
+        _orderedItems = State(initialValue: previewOrderedItems ?? [])
+        self.isPreviewMode = isPreviewMode
+    }
     
     enum AlertType {
         case startRepair
     }
     
+    // MARK: - Body
     var body: some View {
-        ZStack {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     DetailInfoSection(
@@ -43,36 +41,15 @@ struct ReceiptDetailView: View {
                         rows: detailRows()
                     )
                     
+                    // 상태별 화면
                     switch receiptDetailViewModel.item.status {
                     case .inProgress:
-                        if hasOrder {
+                        if isLoading {
+                            ProgressView("로딩 중...").frame(maxWidth: .infinity)
+                        } else if hasOrder {
                             OrderInfoSection(items: orderedItems)
                         } else {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("발주가 필요합니다")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(AppColor.mainTextBlack)
-                                Text("수리 진행을 위해 필요한 부품을 바로 요청하세요.")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(AppColor.textMuted)
-                                
-                                Button {
-                                    goToOrder = true
-                                } label: {
-                                    HStack {
-                                        Spacer()
-                                        Text("발주 요청 바로가기")
-                                            .font(.system(size: 15, weight: .semibold))
-                                        Spacer()
-                                    }
-                                    .padding(.vertical, 14)
-                                    .background(AppColor.mainBlue)
-                                    .foregroundColor(AppColor.surface)
-                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .gfCardStyle()
+                            repairOrderPrompt
                         }
                     case .completed:
                         CombinedCompletionSummarySectionCompact(
@@ -101,86 +78,99 @@ struct ReceiptDetailView: View {
                 .padding(.vertical, 24)
             }
             .background(AppColor.background.ignoresSafeArea())
-            
-            VStack {
-                NavigationLink(
-                    destination: OrderRequestView(
-                        historyViewModel: OrderHistoryViewModel(),
-                        formVM: receiptDetailViewModel.completionFormVM,
-                        initialVehicle: ReceiptVehicle(
-                            carNum: receiptDetailViewModel.item.carNumber,
-                            carType: receiptDetailViewModel.item.carModel
-                        ),
-                        receiptNum: receiptDetailViewModel.item.id,
-                        isFromReceipt: true  // 내접수에서 발주하는 경우
-                    ) { order in
-                        // 내접수에서 발주한 경우에는 발주 상세보기로 가지 않음
-                        // handleOrderCreated는 호출하지 않음
-                    },
-                    isActive: $goToOrder
-                ) {
-                    EmptyView()
+            .navigationTitle("접수 상세")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(AppColor.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                bottomActionBar
+            }
+            .background(AppColor.background.ignoresSafeArea())
+            .task {
+                guard !isPreviewMode else { return }
+                isLoading = true
+                await receiptDetailViewModel.fetchReceiptDetail(id: receiptDetailViewModel.item.id)
+                await refreshOrderedItems()
+                isLoading = false
+            }
+            .alert(isPresented: $showAlert) {
+                switch alertType {
+                case .startRepair:
+                    return Alert(
+                        title: Text("수리를 시작하시겠습니까?"),
+                        message: Text("담당자 정보가 등록됩니다."),
+                        primaryButton: .destructive(Text("확인")) {
+                            receiptDetailViewModel.startRepair()
+                        },
+                        secondaryButton: .cancel(Text("취소"))
+                    )
+                case .none:
+                    return Alert(
+                        title: Text("오류"),
+                        message: Text("잘못된 동작입니다."),
+                        dismissButton: .default(Text("확인"))
+                    )
                 }
-                .hidden()
-                
-                NavigationLink(
-                    destination: createdOrderDetailView(),
-                    isActive: $showOrderDetail
-                ) {
-                    EmptyView()
-                }
-                .hidden()
             }
-        }
-        .navigationTitle("접수 상세")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(AppColor.background, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            bottomActionBar
-        }
-        .background(AppColor.background.ignoresSafeArea())
-        .task {
-            guard !isPreviewMode else { return }
             
-            await receiptDetailViewModel.fetchReceiptDetail(id: receiptDetailViewModel.item.id)
-            await refreshOrderedItems()
-        }
-        .alert(isPresented: $showAlert) {
-            switch alertType {
-            case .startRepair:
-                return Alert(
-                    title: Text("수리를 시작하시겠습니까?"),
-                    message: Text("담당자 정보가 등록됩니다."),
-                    primaryButton: .destructive(Text("확인")) {
-                        receiptDetailViewModel.startRepair()
-                    },
-                    secondaryButton: .cancel(Text("취소"))
-                )
-            case .none:
-                return Alert(title: Text("오류"), message: Text("잘못된 동작입니다."), dismissButton: .default(Text("확인")))
+            // ✅ Navigation Destinations (플리커 없는 전환)
+            .navigationDestination(isPresented: $goToOrder) {
+                OrderRequestView(
+                    historyViewModel: OrderHistoryViewModel(),
+                    formVM: receiptDetailViewModel.completionFormVM,
+                    initialVehicle: ReceiptVehicle(
+                        carNum: receiptDetailViewModel.item.carNumber,
+                        carType: receiptDetailViewModel.item.carModel
+                    ),
+                    receiptNum: receiptDetailViewModel.item.id,
+                    isFromReceipt: true
+                ) { _ in }
+            }
+            .navigationDestination(isPresented: $showOrderDetail) {
+                if let order = createdOrder {
+                    OrderDetailView(
+                        orderId: order.orderId,
+                        onCancel: {},
+                        onBack: {
+                            createdOrder = nil
+                            showOrderDetail = false
+                        }
+                    )
+                }
             }
         }
-    }
-    // MARK: - 수리 중 버튼
-    private func bottomBarNavigationLink<Destination: View>(title: String, color: Color, @ViewBuilder destination: () -> Destination) -> some View {
-        VStack {
-            NavigationLink(destination: destination()) {
-                Text(title)
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(color)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
-            }
-        }
-        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: -1)
     }
     
-    // MARK: - 상태 색상
+    // MARK: - 수리 요청 안내 카드
+    private var repairOrderPrompt: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("발주가 필요합니다")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(AppColor.mainTextBlack)
+            Text("수리 진행을 위해 필요한 부품을 바로 요청하세요.")
+                .font(.system(size: 14))
+                .foregroundColor(AppColor.textMuted)
+            
+            Button {
+                goToOrder = true
+            } label: {
+                HStack {
+                    Spacer()
+                    Text("발주 요청 바로가기")
+                        .font(.system(size: 15, weight: .semibold))
+                    Spacer()
+                }
+                .padding(.vertical, 14)
+                .background(AppColor.mainBlue)
+                .foregroundColor(AppColor.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+            .buttonStyle(.plain)
+        }
+        .gfCardStyle()
+    }
+    
+    // MARK: - 색상
     private func statusColor(for status: ReceiptStatus) -> Color {
         switch status {
         case .checkIn: return AppColor.mainBlue
@@ -192,28 +182,8 @@ struct ReceiptDetailView: View {
     private func handleOrderCreated(_ order: OrderHistoryItem) {
         createdOrder = order
         showOrderDetail = true
-        
         guard !isPreviewMode else { return }
-        
-        Task {
-            await refreshOrderedItems()
-        }
-    }
-    
-    @ViewBuilder
-    private func createdOrderDetailView() -> some View {
-        if let order = createdOrder {
-            OrderDetailView(
-                orderId: order.orderId,
-                onCancel: { },
-                onBack: {
-                    createdOrder = nil
-                    showOrderDetail = false
-                }
-            )
-        } else {
-            EmptyView()
-        }
+        Task { await refreshOrderedItems() }
     }
     
     @MainActor
@@ -225,32 +195,8 @@ struct ReceiptDetailView: View {
         orderedItems = orderData
     }
     
-}
-
-private extension ReceiptDetailView {
-    func detailRows() -> [(String, String)] {
-        var rows: [(String, String)] = [
-            ("접수번호", receiptDetailViewModel.item.id),
-            ("접수일자", receiptDetailViewModel.item.date),
-            ("차량번호", receiptDetailViewModel.item.carNumber),
-            ("차주", receiptDetailViewModel.item.ownerName),
-            ("차주번호", receiptDetailViewModel.item.phoneNumber),
-            ("차종", receiptDetailViewModel.item.carModel),
-            ("요청사항", receiptDetailViewModel.item.requestContent),
-            ("담당자", receiptDetailViewModel.item.manager ?? "-")
-        ]
-        
-        if receiptDetailViewModel.item.status == .completed,
-           let completion = receiptDetailViewModel.item.completionInfos?.first?.completionDate {
-            rows.append(("완료일자", completion))
-            if let days = receiptDetailViewModel.item.leadTimeDays {
-                rows.append(("소요일", "\(days)일"))
-            }
-        }
-        return rows
-    }
-    
-    var bottomActionBar: some View {
+    // MARK: - 하단 버튼
+    private var bottomActionBar: some View {
         VStack(spacing: 16) {
             Divider().overlay(AppColor.cardBorder)
             Group {
@@ -290,146 +236,30 @@ private extension ReceiptDetailView {
     }
 }
 
-/// 완료된 수리 정보를 모아 보여주는 섹션 뷰
-
-struct CompletionInfoSection: View {
-    let infos: [ReceiptDetailViewModel.CompletionInfo]
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            let grouped = Dictionary(grouping: infos, by: { $0.repairDescription })
-            HStack {
-                Text("수리 완료 정보")
-                    .font(.title3).fontWeight(.semibold)
-                Spacer()
-                Text("총 \(grouped.keys.count)건")
-                    .font(.callout).foregroundColor(.gray)
+// MARK: - 상세 행 생성
+private extension ReceiptDetailView {
+    func detailRows() -> [(String, String)] {
+        var rows: [(String, String)] = [
+            ("접수번호", receiptDetailViewModel.item.id),
+            ("접수일자", receiptDetailViewModel.item.date),
+            ("차량번호", receiptDetailViewModel.item.carNumber),
+            ("차주", receiptDetailViewModel.item.ownerName),
+            ("차주번호", receiptDetailViewModel.item.phoneNumber),
+            ("차종", receiptDetailViewModel.item.carModel),
+            ("요청사항", receiptDetailViewModel.item.requestContent),
+            ("담당자", receiptDetailViewModel.item.manager ?? "-")
+        ]
+        if receiptDetailViewModel.item.status == .completed,
+           let completion = receiptDetailViewModel.item.completionInfos?.first?.completionDate {
+            rows.append(("완료일자", completion))
+            if let days = receiptDetailViewModel.item.leadTimeDays {
+                rows.append(("소요일", "\(days)일"))
             }
-            Divider()
-                .padding(.bottom, 6)
-            ForEach(Array(grouped.keys.enumerated()), id: \.1) {
-                index, key in if let group = grouped[key] {
-                    CompletionGroupView(index: index, group: group) } }
-            HStack {
-                Spacer()
-                Text("총 합계: \(formattedPrice(totalPrice(of: infos)))")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(AppColor.mainBlue)
-            }.padding(.top, 12) }
-        .padding(20)
-        .background(RoundedRectangle(cornerRadius: 18)
-            .fill(Color.white)
-            .shadow(color: .black.opacity(0.08), radius: 5, x: 0, y: 2))
-        .padding(.bottom, 10) }
-    
-    private func totalPrice(of infos: [ReceiptDetailViewModel.CompletionInfo]) -> Double {
-        infos.reduce(0) {
-            $0 + $1.totalPrice
         }
+        return rows
     }
-    
-    private func formattedPrice(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        return (formatter.string(from: NSNumber(value: value)) ?? "0") + "원" }
 }
 
-struct SingleRepairCompletionSection: View { struct PartLine: Identifiable { let id = UUID()
-    let name: String
-    let quantity: Int
-    let unitPrice: Double
-    var lineTotal: Double { Double(quantity) * unitPrice } }
-    let descriptionText: String
-    let causeText: String
-    let parts: [PartLine]
-    
-    var body: some View { VStack(alignment: .leading, spacing: 14) {
-        HStack { Text("수리 상세 정보")
-                .font(.title3).fontWeight(.semibold)
-            Spacer()
-            Text("부품 \(parts.count)종")
-            .font(.callout).foregroundColor(.gray) }
-        Divider()
-            .padding(.bottom, 6)
-        // 수리내용/원인: 맨 위에 한 번만
-        VStack(alignment: .leading, spacing: 8) {
-            Text(descriptionText)
-                .font(.headline)
-            Text("원인: \(causeText)")
-            .font(.subheadline)
-            .foregroundColor(.secondary) }
-        
-        // 부품 라인
-        VStack(alignment: .leading, spacing: 10) {
-            ForEach(parts) {p in
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text(p.name).font(.body)
-                        Spacer()
-                        
-                        Text(formatPrice(p.unitPrice * Double(p.quantity)))
-                            .font(.body)
-                            .fontWeight(.medium)
-                        .foregroundColor(AppColor.mainBlue) }
-                    Text("수량: \(p.quantity)EA")
-                        .font(.callout)
-                        .foregroundColor(.gray)
-                }
-                Divider()
-                    .opacity(0.15)
-            }
-        }
-        .padding(.top, 6) // 총 합계
-        
-        HStack {
-            Spacer()
-            Text("총 합계: \(formatPrice(parts.reduce(0) { $0 + $1.lineTotal }))")
-                .font(.title3)
-                .fontWeight(.bold)
-            .foregroundColor(AppColor.mainBlue) }
-        .padding(.top, 8) }
-    .padding(20)
-    .background( RoundedRectangle(cornerRadius: 18)
-        .fill(Color.white)
-        .shadow(color: .black.opacity(0.08), radius: 5, x: 0, y: 2) ) } }
-
-private func formatPrice(_ value: Double) -> String {
-    let f = NumberFormatter()
-    f.numberStyle = .decimal
-    return (f.string(from: NSNumber(value: value)) ?? "0") + "원" }
-/// 하나의 수리 내역 그룹(수리 내용 + 원인 + 부품 리스트 + 항목 합계)을 표시하는 뷰
-
-struct CompletionGroupView: View {
-    let index: Int
-    let group: [ReceiptDetailViewModel.CompletionInfo]
-    var body: some View {
-        if let first = group.first {
-            VStack(alignment: .leading, spacing: 10) {
-        // 수리 내용 + 원인
-        VStack(alignment: .leading, spacing: 10) {
-            Text("\(index + 1). \(first.repairDescription)")
-            .font(.title3)
-            Text("원인: \(first.cause)") .font(.body) }
-        // 부품 리스트
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(group, id: \.partName) {
-                part in VStack(alignment: .leading, spacing: 2) {
-            HStack {
-                Text(part.partName) .font(.body)
-                Spacer()
-                Text(formatPrice(part.partPrice)) .font(.body) .fontWeight(.medium)
-                .foregroundColor(AppColor.mainBlue) }
-                    Text("수량: \(part.partQuantity)EA") .font(.body) .foregroundColor(.gray) }
-                Divider()
-                .padding(.vertical, 4).opacity(0.15) } }
-        .padding(.horizontal, 2)
-        // 항목 합계
-        HStack {
-            Spacer()
-            Text("항목 합계: \(formatPrice(group.reduce(0) {$0 + $1.totalPrice }))")
-            .font(.callout)
-            .fontWeight(.semibold) .foregroundColor(.green) } }
-        Divider().padding(.vertical, 4) } } }
 
 struct CombinedCompletionSummarySectionCompact: View {
     struct Line: Identifiable {

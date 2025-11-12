@@ -62,9 +62,7 @@ final class ReceiptDetailViewModel: ObservableObject {
         let partPrice: Double           // 단가
         let totalPrice: Double          // 총액 (수량 * 단가)
     }
-    
 }
-
 
 extension ReceiptDetailViewModel {
     @MainActor

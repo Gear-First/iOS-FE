@@ -65,11 +65,6 @@ enum PurchaseOrderAPI {
         print("[PurchaseOrderAPI] 발주 생성 요청 (engineerId: \(session.engineerId), branch: \(session.branchCode))")
 
         let data = try JSONEncoder().encode(order)
-
-        if let jsonString = String(data: data, encoding: .utf8) {
-            print("🟢 [PurchaseOrderAPI] 발주 생성 요청 바디:\n\(jsonString)")
-        }
-
         
         var request = URLRequest(url: URL(string: url)!)
         request.httpMethod = "POST"
@@ -139,7 +134,7 @@ enum PurchaseOrderAPI {
             throw URLError(.userAuthenticationRequired)
         }
 
-        let url = "\(APIConfig.Order.baseURL)/purchase-orders/branch"
+        let url = "\(APIConfig.Order.baseURL)/purchase-orders/branch?size=100"
         print("[PurchaseOrderAPI] 요청 URL:", url)
 
         let response: OrderHistoryResponse = try await NetworkManager.shared.request(url: url)
