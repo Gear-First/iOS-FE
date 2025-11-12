@@ -1,6 +1,6 @@
 enum APIConfig {
     enum Domain {
-        static let api = "https://gearfirst-auth-mobile.duckdns.org"
+        static let api = "http://34.120.215.23"
     }
 
     enum Auth {
