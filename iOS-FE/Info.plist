@@ -5,17 +5,9 @@
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
-		<false/>
+		<true/>
 		<key>NSExceptionDomains</key>
-		<dict>
-			<key>gearfirst-auth-mobile.duckdns.org</key>
-			<dict>
-				<key>NSIncludesSubdomains</key>
-				<true/>
-				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-				<false/>
-			</dict>
-		</dict>
+		<dict/>
 	</dict>
 	<key>CFBundleURLTypes</key>
 	<array>

@@ -80,11 +80,11 @@ struct MyReceiptListView: View {
                         .padding(.vertical, 10)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(isSelected ? AppColor.mainBlue : AppColor.surface)
+                                .fill(isSelected ? AppColor.mainColor : AppColor.surface)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(isSelected ? AppColor.mainBlue.opacity(0.35) : AppColor.cardBorder, lineWidth: 1)
+                                .stroke(isSelected ? AppColor.mainColor.opacity(0.35) : AppColor.cardBorder, lineWidth: 1)
                         )
                 }
                 .buttonStyle(.plain)

@@ -14,6 +14,7 @@ struct AppColor {
     static let surfaceMuted = Color(hex: "#F8FAFC")
     static let cardBorder = Color(hex: "#E2E8F0")
     static let cardShadow = Color.black.opacity(0.04)
+    static let mainColor = Color(hex: "#111827")
 
     // Legacy aliases kept for compatibility
     static let mainWhite = surface        // 기존 명칭 유지

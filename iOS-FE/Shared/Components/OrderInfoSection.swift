@@ -14,39 +14,40 @@ struct OrderInfoSection: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(AppColor.textMuted)
             }
-
-            LazyVStack(spacing: 10) {
+            
+            
+            
+            
+            
+            
+            VStack(spacing: 8) {
                 ForEach(items) { item in
-                    HStack(alignment: .center, spacing: 12) {
+                    HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(item.partName)
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(AppColor.mainTextBlack)
-                            Text(item.partCode)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(AppColor.textMuted)
-                        }
-                        Spacer()
-                        HStack(spacing: 8) {
-                            Text("\(item.quantity)EA")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(AppColor.mainBlue)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(AppColor.mainBlue.opacity(0.1))
-                                .clipShape(Capsule())
-                            if item.price > 0 {
-                                Text("\(formatCurrency(item.price * Double(item.quantity)))")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(AppColor.mainTextBlack)
+                            HStack(spacing: 10) {
+                                Text("수량 \(item.quantity)EA")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.secondary)
+                                Text("단가 \(formatCurrency(item.price))")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.secondary)
                             }
                         }
+                        Spacer()
+                        
+                            Text("\(formatCurrency(item.price * Double(item.quantity)))")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(Color(hex: "#1E293B"))
                     }
-                    .padding(12)
+                    .padding(10)
                     .background(AppColor.surfaceMuted)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
             }
+            
         }
         .gfCardStyle(cornerRadius: 22, padding: 24)
     }

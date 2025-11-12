@@ -84,11 +84,11 @@ struct BottomBar: View {
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(isSelected ? AppColor.mainBlue : AppColor.surfaceMuted)
+                    .fill(isSelected ? AppColor.mainColor : AppColor.surfaceMuted)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(isSelected ? AppColor.mainBlue.opacity(0.3) : AppColor.cardBorder, lineWidth: 1)
+                    .stroke(isSelected ? AppColor.mainColor.opacity(0.3) : AppColor.cardBorder, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
