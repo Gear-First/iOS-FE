@@ -1,17 +1,18 @@
-//
-//  iOS_FEApp.swift
-//  iOS-FE
-//
-//  Created by wj on 9/29/25.
-//
-
 import SwiftUI
 
 @main
 struct iOS_FEApp: App {
+    @StateObject private var authViewModel = AuthViewModel.shared
+    
     var body: some Scene {
         WindowGroup {
-            BottomBar()
+            if authViewModel.isLoggedIn {
+                BottomBar()
+                    .environmentObject(authViewModel)
+            } else {
+                AuthView()
+                    .environmentObject(authViewModel)
+            }
         }
     }
 }
